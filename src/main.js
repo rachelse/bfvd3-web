@@ -1,0 +1,134 @@
+import { createApp } from 'vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import { createVuetify } from 'vuetify';
+import * as vuetifyComponents from 'vuetify/components';
+import * as vuetifyDirectives from 'vuetify/directives';
+import 'vuetify/styles';
+import { create } from 'axios';
+
+import {
+    mdiHistory,
+    mdiChevronLeft,
+    mdiChevronRight,
+    mdiClockOutline,
+    mdiAlertCircleOutline,
+    mdiHelpCircleOutline,
+    mdiMagnify,
+    mdiTune,
+    mdiDns,
+    mdiReorderHorizontal,
+    mdiDelete,
+    mdiFileDownloadOutline,
+    mdiCloudDownloadOutline,
+    mdiFormatListBulleted,
+    mdiLabel,
+    mdiLabelOutline,
+    mdiNotificationClearAll,
+    mdiProgressWrench,
+    mdiRestore,
+    mdiFullscreen,
+    mdiArrowRightCircle,
+    mdiArrowRightCircleOutline,
+    mdiCircle,
+    mdiCircleHalf,
+    mdiPlusBox,
+    mdiMinusBox,
+    mdiOpenInNew,
+    mdiDotsVertical,
+    mdiGithub,
+    mdiExport,
+    mdiChartBarStacked,
+} from '@mdi/js'
+
+import App from './App.vue';
+import Search from './Search.vue';
+import Cluster from './Cluster.vue';
+
+window.document.title = "BFVD";
+
+const router = createRouter({
+    history: createWebHistory(),
+    routes: [
+        { path: '/', redirect: { name: 'search' } },
+        { name: 'search', path: '/', component: Search },
+        { name: 'go', path: '/go/:go/:type', component: Search },
+        { name: 'lca', path: '/lca/:taxid/:type', component: Search },
+        { name: 'foldseek', path: '/foldseek/:jobid', component: Search },
+        { name: 'cluster', path: '/cluster/:cluster', component: Cluster },
+    ],
+    linkActiveClass: 'active',
+    scrollBehavior (to, from, savedPosition) {
+        if (savedPosition) {
+          return savedPosition
+        } else {
+          return { x: 0, y: 0 }
+        }
+    },
+});
+
+const mq = window.matchMedia('(prefers-color-scheme: dark)')
+
+const vuetify = createVuetify({
+    components: vuetifyComponents,
+    directives: vuetifyDirectives,
+    theme: {
+        defaultTheme: mq.matches ? 'dark' : 'light',
+    },
+})
+
+mq.addEventListener('change', (e) => {
+    vuetify.theme.change(e.matches ? 'dark' : 'light');
+})
+
+const $MDI = {
+    History: mdiHistory,
+    ChevronLeft: mdiChevronLeft,
+    ChevronRight: mdiChevronRight,
+    ClockOutline: mdiClockOutline,
+    AlertCircleOutline: mdiAlertCircleOutline,
+    HelpCircleOutline: mdiHelpCircleOutline,
+    Magnify: mdiMagnify,
+    Tune: mdiTune,
+    Dns: mdiDns,
+    ReorderHorizontal: mdiReorderHorizontal,
+    Delete: mdiDelete,
+    FileDownloadOutline: mdiFileDownloadOutline,
+    CloudDownloadOutline: mdiCloudDownloadOutline,
+    FormatListBulleted: mdiFormatListBulleted,
+    Label: mdiLabel,
+    LabelOutline: mdiLabelOutline,
+    NotificationClearAll: mdiNotificationClearAll,
+    ProgressWrench: mdiProgressWrench,
+    Restore: mdiRestore,
+    Fullscreen: mdiFullscreen,
+    ArrowRightCircle: mdiArrowRightCircle,
+    ArrowRightCircleOutline: mdiArrowRightCircleOutline,
+    Circle: mdiCircle,
+    CircleHalf: mdiCircleHalf,
+    PlusBox: mdiPlusBox,
+    MinusBox: mdiMinusBox,
+    DotsVertical: mdiDotsVertical,
+    OpenInNew: mdiOpenInNew,
+    GitHub: mdiGithub,
+    Export: mdiExport,
+    ChartBarStacked: mdiChartBarStacked
+};
+
+let apiBase = "/api";
+let defaultHeaders = {};
+
+const axiosConfig = {
+    baseURL: apiBase,
+    headers: defaultHeaders
+};
+
+const app = createApp(App);
+app.config.globalProperties.$MDI = $MDI;
+app.config.globalProperties.$axios = create(axiosConfig);
+app.use(router);
+app.use(vuetify);
+
+// make sure our CSS is loaded last
+import './assets/style.css';
+
+app.mount('#app');

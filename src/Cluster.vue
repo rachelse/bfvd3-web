@@ -1,0 +1,340 @@
+<template>
+
+<v-row style="margin:1em;">
+    <v-col cols="12" md="8">
+    <panel>
+        <template v-slot:header v-if="response">
+            Entry: {{ response ? response.rep_accession : "Loading..." }}
+        </template>
+
+        <template v-slot:toolbar-extra v-if="response">
+            <v-chip v-if="response.warning == true" color="error">Warning</v-chip>
+
+            <v-menu offset-y left>
+                <template v-slot:activator="{ props }">
+                    <v-btn plain v-bind="props">
+                        <v-icon>{{ $MDI.NotificationClearAll }}</v-icon>
+                        MSA
+                    </v-btn>
+                </template>
+                <v-list>
+                    <v-list-item :href="'https://bfvd.steineggerlab.workers.dev/a3m/' + response.rep_accession + '.a3m'">
+                        <template v-slot:prepend>
+                            <v-icon>{{ $MDI.FileDownloadOutline }}</v-icon>
+                        </template>
+                        <v-list-item-title>
+                            MSA (.a3m)
+                        </v-list-item-title>
+                    </v-list-item>
+                    <v-list-item :href="'https://bfvd.steineggerlab.workers.dev/pae/' + response.rep_accession + '.json'">
+                        <template v-slot:prepend>
+                            <v-icon>{{ $MDI.FileDownloadOutline }}</v-icon>
+                        </template>
+                        <v-list-item-title>
+                            PAE (.json)
+                        </v-list-item-title>
+                    </v-list-item>
+                    <v-dialog v-model="dialog" fullscreen>
+                        <template v-slot:activator="{ props }">
+                            <v-list-item v-bind="props">
+                                <template v-slot:prepend>
+                                    <v-icon>{{ $MDI.ChartBarStacked }}</v-icon>
+                                </template>
+                                <v-list-item-title>
+                                    Conservation
+                                </v-list-item-title>
+                            </v-list-item>
+                        </template>
+
+                        <Panel>
+                            <template v-slot:header>
+                                MSA conservation
+                            </template>
+
+                            <template v-slot:toolbar-extra>
+                                <v-btn color="primary" text @click="dialog = false">
+                                    Close
+                                </v-btn>
+                            </template>
+                            
+                            <template v-slot:content>
+                                <MsaLogoPlot :accession="$route.params.cluster"></MsaLogoPlot>
+                            </template>
+                        </Panel>
+                    </v-dialog>
+                </v-list>
+            </v-menu>
+        </template>
+
+        <template v-slot:content v-if="response">
+            <h3>Representative summary</h3>
+            <dl class="dl-4">
+                <div>
+                <dt>
+                    Accession
+                </dt>
+                <dd>
+                    <ExternalLinks :accession="response.rep_accession"></ExternalLinks><br>
+                    {{ response.description }}
+                </dd>
+                </div>
+                <div>
+                <dt>
+                    Length
+                </dt>
+                <dd>
+                    {{ response.rep_len }} aa
+                </dd>
+                </div>
+                <div>
+                <dt>
+                    pLDDT
+                </dt>
+                <dd>
+                    {{ response.rep_plddt.toFixed(2) }}
+                </dd>
+                </div>
+                <div>
+                <dt>
+                    Singleton cluster
+                </dt>
+                <dd>
+                    {{ response.is_dark ? 'yes' : 'no' }}
+                </dd>
+                </div>
+                <div style=" grid-area: 2 / 1 / 3 / 5;">
+                <dt>
+                    Taxonomy
+                </dt>
+                <dd>
+                    <template v-for="(taxonomy, index) in response.rep_lineage" :key="taxonomy.id"><TaxSpan :taxonomy="taxonomy"></TaxSpan><template v-if="index < (response.rep_lineage.length -1)"> &#187;&nbsp;</template></template>
+                </dd>
+                <dt v-if="response.hosts.length > 0">
+                    Host
+                </dt>
+                <dd v-if="response.hosts.length > 0">
+                    <template v-for="(taxonomy, index) in response.hosts" :key="taxonomy.id"><TaxSpan :taxonomy="taxonomy"></TaxSpan><template v-if="index < (response.hosts.length -1)"> ,&nbsp;</template></template>
+                </dd>
+                </div>
+                </dl>
+                <v-divider  style="margin-top:0.5em"></v-divider>
+                <h3 style="margin-top:1em">
+                    UniRef cluster summary
+                    <!--<v-tooltip top>
+                        <template v-slot:activator="{ on }">
+                            <span v-on="on">
+                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                            </span>
+                        </template>
+                        <span>
+                            These values are computed among the members with the <strong>clustered step</strong> AFDB/Foldseek.
+                        </span>
+                    </v-tooltip>-->
+                </h3>
+                <dl class="dl-4">
+                <div>
+                <dt>
+                    Number of members
+                </dt>
+                <dd>
+                    {{ response.n_mem }}
+                </dd>
+                </div>
+                <div>
+                <dt>
+                    Average length
+                </dt>
+                <dd>
+                    {{ response.avg_len.toFixed(2) }} aa
+                </dd>
+                </div>
+                <div>
+                <!-- <dt>
+                    Average pLDDT
+                </dt>
+                <dd>
+                    {{ response.avg_plddt.toFixed(2) }}
+                </dd> -->
+                </div>
+                <div style=" grid-area: 2 / 1 / 3 / 5;">
+                <dt>
+                    Lowest common ancestor and lineage
+                </dt>
+                <dd>
+                    <template v-for="(taxonomy, index) in response.lineage" :key="taxonomy.id"><TaxSpan :taxonomy="taxonomy"></TaxSpan><template v-if="index < (response.lineage.length -1)"> &#187;&nbsp;</template></template>
+                </dd>
+                </div>
+                <!-- <div style=" grid-area: 3 / 1 / 3 / 5;">
+                    <dt>Annotations</dt>
+                    <dd>
+                        <Annotations :cluster="$route.params.cluster"></Annotations>
+                    </dd>
+                </div> -->
+            </dl>
+            <template v-if="response && response.warning == true">
+                <v-divider  style="margin-top:0.5em"></v-divider>
+                <h3 style="margin-top:1em; color: #F44336; text-decoration: underline;">
+                    Warning!
+                </h3>
+                <p>
+                    This cluster was wrongly merged with another cluster. We are working on a fix.
+                </p>
+            </template>
+        </template>
+    </panel>
+    </v-col>
+    <v-col cols="12" md="4">
+    <Panel class="repr-structure">
+        <template v-slot:header>
+            Representative structure
+        </template>
+        
+        <template v-slot:toolbar-extra v-if="response">
+            <v-btn plain :href="'https://bfvd.steineggerlab.workers.dev/pdb/' + response.rep_accession + '.pdb'">
+                <v-icon class="mr-1">{{ $MDI.FileDownloadOutline }}</v-icon>
+                PDB
+            </v-btn>
+        </template>
+        
+        <template v-slot:content v-if="response">
+            <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" :second="second" @reset="second = ''"></StructureViewer>
+        </template>
+    </Panel>
+    </v-col>
+
+    <v-col cols="12">
+        <Members :cluster="$route.params.cluster" @select="(accession) => second = accession"></Members>
+    </v-col>
+
+    <v-col cols="12">
+        <Similars :cluster="$route.params.cluster" @select="(accession) => second = accession"></Similars>
+    </v-col>
+
+    <v-col cols="12" class="mt-3">
+        <v-card rounded="0">
+            <v-col>
+            <v-card-title primary-title class="pb-0 mb-0">
+                <div class="text-h5 mb-0">Reference</div>
+            </v-card-title>
+            <v-card-title primary-title class="pt-0 mt-0">
+                <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
+                    Kim&nbsp;R, Levy&nbsp;Karin&nbsp;E, Mirdita&nbsp;M, Steinegger&nbsp;M.
+                    <a href="https://academic.oup.com/nar/advance-article/doi/10.1093/nar/gkae1119/7906834" target="_blank" rel="noopener">BFVD - a large repository of predicted viral protein structures.</a>
+                    Nucleic Acids Research,&nbsp;gkae1119,&nbsp;2024.
+                </p>
+            </v-card-title>
+            </v-col>
+        </v-card>
+    </v-col>
+</v-row>
+</template>
+
+<script>
+import Panel from "./Panel.vue";
+import StructureViewer from "./StructureViewer.vue";
+import Members from "./Members.vue";
+import TaxSpan from "./TaxSpan.vue";
+import ExternalLinks from "./ExternalLinks.vue";
+import Similars from "./Similars.vue";
+import MsaLogoPlot from "./logoplot/MsaLogoPlot.vue"
+// import Annotations from "./Annotations.vue";
+
+export default {
+    name: "cluster",
+    components: {
+        Panel,
+        StructureViewer,
+        Members,
+        TaxSpan,
+        ExternalLinks,
+        Similars,
+        MsaLogoPlot
+        // Annotations,
+    },
+    data() {
+        return {
+            dialog: false,
+            cluster: null,
+            response: null,
+            fetching: false,
+            second: "",
+        }
+    },
+    mounted() {
+        this.fetchData();
+    },
+    watch: {
+        $route(to, from) {
+            if (to.params.cluster === from.params.cluster) {
+                return;
+            }
+
+            this.fetchData();
+        }
+    },
+    methods: {
+        log(value) {
+            console.log(value);
+        },
+        fetchData() {
+            this.fetching = true;
+            this.cluster = this.$route.params.cluster;
+            if (!this.cluster) {
+                return;
+            }
+
+            this.$axios.get("/cluster/" + this.$route.params.cluster)
+                .then(response => {
+                    this.response = response.data;
+                })
+                .catch((result) => {
+                    if (!result || !result.response || result.response.status != 404) {
+                        return;
+                    }
+                    this.$axios.get("/" + this.$route.params.cluster)
+                        .then(response => {
+                            this.$router.replace({ name: "cluster", params: { cluster: response.data[0].rep_accession } });
+                        })
+                        .catch(() => {});
+                })
+                .finally(() => {
+                    this.fetching = false;
+                });
+        }
+    }
+}
+
+</script>
+
+<style scoped>
+dl {
+  display: grid;
+  padding-top: .25em;
+  padding-bottom: 1em;
+  grid-gap: 1em;
+}
+
+.dl-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dl-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+dt {
+    font-weight: bold;
+}
+
+@media screen and (min-width: 961px) {
+    .repr-structure {
+        margin-left: 1em;
+    }
+}
+
+@media screen and (max-width: 960px) {
+    .repr-structure {
+        margin-top: 1em;
+    }
+}
+</style>
