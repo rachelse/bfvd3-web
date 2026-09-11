@@ -132,6 +132,15 @@ the top 100 hits per query would cut it to ~12 GB without affecting any current 
 **3.15 Layout:** everything under `data-bfvd2/`, a sibling of v1's `data-bfvd/`, so
 `data/` holds only the live dataset. Only `script/` and this file are tracked in git.
 
+**3.17 `taxonomy_lineage` stays.** It precomputes the ancestor -> descendant closure of
+the viral subtree so the LCA search can filter by clade inside SQL (`index.mjs:199`).
+The server could answer the same question from the in-memory NCBI tree -- it already
+does for the other taxonomy filter, in `finalizeResult` -- so the logic is duplicated.
+Kept anyway: the table and the query both predate this branch (the query is at
+`d4de804:246`, and v1's database has it with 2,816,808 rows, built by
+`data/build_taxonomy.sh`), so removing it would change inherited behaviour rather than
+tidy up new work. v2 only rebuilds it from the fresh taxdump.
+
 **3.16 Swapping `out/` into `data/` is yours,** not part of this run. The build stops
 after validation.
 
@@ -168,6 +177,8 @@ ictv(tax_id PK, ictv_id, ictv_accession, ictv_host, mapping_step)  -- 208,513
 taxonomy_host(accession, tax_id)                                 -- 2,406,200
 taxonomy_lineage(parent, child)                                  -- 3,157,719
 ```
+
+`taxonomy_lineage` is kept (§3.17).
 
 `cluster_id` sits on `entry`, so members are one query with no self-referential lookup.
 `lca_tax_id` is the LCA of the cluster's member taxids over the NCBI tree.
