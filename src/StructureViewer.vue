@@ -512,8 +512,7 @@ END
         },
         'second': {
             handler() {
-                // Guard falsy, not just "": an undefined here used to be interpolated
-                // into the URL and fetched as the literal string "undefined".
+                // Guard falsy, not just "": undefined was fetched as "undefined".
                 if (!this.second) {
                     return;
                 }

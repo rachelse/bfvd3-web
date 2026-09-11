@@ -8,13 +8,11 @@
 #   taxonomy-parent_child.tsv    parent, child
 #
 #   flag        1 = ColabFold-AF2, 2 = ESMFold+ProteinTTT_MSA
-#   lca_tax_id  read from make_lca.sh's output, which uses `mmseqs lca` over the
-#               sequence clustering -- not computed here
+#   lca_tax_id  from make_lca.sh (`mmseqs lca`), not computed here
 #   'NA'        every absent ICTV value, never NULL or ''
 #
-# No ictv_species column: resolved to its species-rank ancestor, the NCBI scientific
-# name equals the ICTV species for 176,302 of 176,330 mapped taxids (100.0%), so the
-# entry page reads species off the NCBI tree instead.
+# No ictv_species: at species rank the NCBI name matches the ICTV species for 176,302 of
+# 176,330 mapped taxids, so the entry page reads it off the NCBI tree.
 #
 # Usage: build_tables.sh <bfvd2-root> <taxdump-dir> <out-dir> <lca.tsv>
 set -euo pipefail
@@ -154,10 +152,9 @@ gawk -F'\t' '
 ' "$TAXIDS" > "$OUT/taxonomy-accession_host.tsv"
 
 # ------------------------------------------- taxonomy-parent_child.tsv
-# Ancestor -> descendant closure of the viral subtree. Walking up from every node
-# and keeping those that reach the root gives the same closure as a DFS, without
-# recursion (v1's script recurses and would very likely exceed Python's recursion
-# limit on a 2025+ dump).
+# Ancestor -> descendant closure of the viral subtree. Walking up from every node and
+# keeping those that reach the root is the same closure as a DFS, without the recursion
+# v1's script would likely blow on a 2025+ dump.
 say "taxonomy-parent_child.tsv"
 gawk -v root="$ROOT" '
     BEGIN { RS = "\r?\n" }

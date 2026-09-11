@@ -1,11 +1,9 @@
 -- BFVD v2 webserver database schema.
 --
--- Entry-centric: every one of the 5,776,417 v2 entries has its own structure and its
--- own page. `cluster` groups them by MMseqs2 sequence clustering (30% identity, 90%
--- coverage) and exists only to drive the members panel and its aggregates.
+-- Entry-centric: each of the 5,776,417 entries has its own structure and page.
+-- `cluster` groups them (MMseqs2, 30% id / 90% cov) only to drive the members panel.
 --
--- Indices are created by load.sh AFTER import; building them during a 5.8M-row import
--- is dramatically slower.
+-- load.sh creates the indices AFTER import; building them during it is far slower.
 
 CREATE TABLE entry (
     accession  TEXT PRIMARY KEY,  -- UniProt accession; the page subject
@@ -31,20 +29,17 @@ CREATE TABLE taxonomy_lineage (
     child  TEXT
 );
 
--- UniProt "Virus hosts": a specific host organism with an NCBI taxid.
--- Accession-keyed, not taxid-keyed: 158 taxids carry more than one distinct host
--- value across their entries, so folding this into `ictv` would lose information.
+-- UniProt "Virus hosts": a specific host organism. Accession-keyed, not taxid-keyed --
+-- 158 taxids carry more than one distinct host value, so `ictv` would lose information.
 CREATE TABLE taxonomy_host (
     accession TEXT,
     tax_id    TEXT
 );
 
--- ICTV, per NCBI taxid. Populated for every BFVD taxid; absent values are the
--- literal string 'NA', never NULL or ''.
+-- ICTV, per NCBI taxid. Populated for every BFVD taxid; absent values are 'NA'.
 --
--- No ictv_species column: resolved to its species-rank ancestor, the NCBI scientific
--- name equals the ICTV species for 176,302 of 176,330 mapped taxids (100.0%), so the
--- entry page reads species off the NCBI tree instead.
+-- No ictv_species: at species rank the NCBI name matches the ICTV species for 176,302
+-- of 176,330 mapped taxids, so the entry page reads it off the NCBI tree.
 --
 -- ictv_host is a coarse controlled-vocabulary category ('vertebrates'), NOT a species.
 -- It is kept separate from taxonomy_host, which holds specific host organisms; the

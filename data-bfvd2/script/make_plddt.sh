@@ -1,14 +1,12 @@
 #!/bin/bash
 # Extract per-residue pLDDT from the structures into the afdb_plddt DbReader files.
 #
-# Reads B-factors straight from the PDBs rather than round-tripping through foldcomp:
-# foldcomp rebuilds backbone geometry from internal coordinates, so a chain break (an
-# unresolved or X residue mid-sequence) is exactly where residues can shift, and the
-# pLDDT string is indexed positionally by the viewer.
+# Reads B-factors straight from the PDBs rather than via foldcomp, which rebuilds
+# geometry from internal coordinates and so can shift residues at a chain break -- and
+# the pLDDT string is indexed positionally by the viewer.
 #
-# extract_plddt emits one digit (pLDDT/10) per CA atom found, so a structure with
-# genuinely missing residues yields a string shorter than its sequence. validate.sh
-# checks length parity against afdb rather than trusting it.
+# extract_plddt emits one digit per CA atom found, so missing residues would shorten the
+# string; validate.sh checks length parity against afdb rather than trusting it.
 #
 # Usage: make_plddt.sh <farm> <bin/extract_plddt> <tmp-dir> <out-prefix> [jobs]
 set -euo pipefail

@@ -1,28 +1,19 @@
 // Shared cache of rendered structure thumbnails, keyed by accession.
 //
-// Rendering one thumbnail is expensive -- pulchra reconstructs full-atom coordinates
-// from the Ca trace, then Mol* parses, builds a cartoon representation and rasterises it
-// -- and MolstarService serialises every render onto one promise queue. Fetching the
-// coordinates, by contrast, costs a millisecond or two.
-//
-// So the thing worth avoiding is re-rendering. This cache lives at module scope rather
-// than on a component, which means:
-//   - paging back to a page you have already seen costs nothing
-//   - the members and similars panels share renders of the same accession
-//   - concurrent requests for one accession render once, not twice
-//
-// It replaces ImageMixin, which kept its images on the component, wiped them on every
-// fetch, and so re-rendered everything from scratch on any page or filter change.
+// Rendering is the expensive part -- pulchra rebuilds full atoms from the Ca trace, then
+// Mol* parses, builds a cartoon and rasterises, all serialised on one queue -- while
+// fetching coordinates costs a millisecond. So the point is to render each accession
+// once. Module scope, not component state, so panels share renders and paging back is
+// free; ImageMixin kept them per-component and wiped them on every fetch.
 
-// Each entry is a PNG blob URL; a few hundred thumbnails is a handful of MB.
+// PNG blob URLs; a few hundred thumbnails is a handful of MB.
 const MAX_ENTRIES = 300;
 
-const cache = new Map();     // accession -> object URL. Map iterates in insertion order,
-                             // which is what makes the LRU eviction below cheap.
+const cache = new Map();     // accession -> object URL; insertion order drives the LRU
 const inflight = new Map();  // accession -> Promise<string>
 
 function touch(accession, url) {
-    // Re-insert so the most recently used entry sits at the end.
+    // Re-insert so the most recent sits last.
     cache.delete(accession);
     cache.set(accession, url);
 }
@@ -78,7 +69,7 @@ export function loadImage(accession, axios, molstarService) {
             return url;
         })
         .catch((e) => {
-            // A missing structure is a 404 from the API; anything else is worth seeing.
+            // A missing structure 404s; anything else is worth seeing.
             console.log(`structure thumbnail for ${accession}:`, e);
             return null;
         })

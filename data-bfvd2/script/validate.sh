@@ -1,10 +1,9 @@
 #!/bin/bash
 # Validate a staged BFVD v2 dataset before it is swapped into data/.
 #
-# Exits non-zero if any check fails. Checks that would otherwise fail silently at
-# runtime (index sort order, pLDDT/sequence length parity) are the point of this
-# script -- dbreader.mjs binary-searches its index and the viewer indexes the pLDDT
-# string positionally, so neither errors when wrong, it just returns nonsense.
+# Exits non-zero on any failure. The point is the checks that fail silently at runtime:
+# dbreader.mjs binary-searches its index and the viewer indexes the pLDDT string
+# positionally, so neither errors when wrong -- it just returns nonsense.
 #
 # Usage: validate.sh <out-dir> <taxdump-dir> [expected-entries]
 set -uo pipefail

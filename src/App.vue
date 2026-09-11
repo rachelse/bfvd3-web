@@ -16,10 +16,8 @@ export default {
 </script>
 
 <style>
-/* Vuetify 2 styled bare <a> to the theme primary through --v-anchor-base; Vuetify 3
-   dropped that rule entirely, so links fell back to the browser defaults -- #0000EE
-   blue, and #551A8B purple once visited, which is why link colours varied across the
-   page. Restore a single themed colour, visited included. */
+/* Vuetify 3 dropped Vuetify 2's anchor rule, so links fell back to browser defaults
+   -- #0000EE, and #551A8B once visited. Restore one themed colour, visited included. */
 a {
     color: rgb(var(--v-theme-primary));
     text-decoration: none;

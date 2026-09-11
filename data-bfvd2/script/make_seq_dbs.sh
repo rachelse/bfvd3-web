@@ -1,10 +1,9 @@
 #!/bin/bash
 # Re-key the v2 Foldseek DB into the DbReader layout the webserver expects.
 #
-# The Foldseek blobs are reused byte-for-byte; only the index is rewritten, from
-# numeric key to UniProt accession via .lookup. That remap destroys key order, so the
-# LC_ALL=C sort afterwards is mandatory -- dbreader.mjs binary-searches the index and
-# an unsorted one returns wrong records silently.
+# The Foldseek blobs are reused byte-for-byte; only the index is re-keyed from numeric
+# id to accession via .lookup. That destroys key order, so the LC_ALL=C sort afterwards
+# is mandatory -- dbreader.mjs binary-searches it and returns wrong records silently.
 #
 # Usage: make_seq_dbs.sh <foldseek-db-prefix> <out-dir>
 set -euo pipefail

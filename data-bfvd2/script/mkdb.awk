@@ -1,18 +1,14 @@
 #!/usr/bin/env -S gawk -f
-# (env needs -S to split the shebang args; v1's data/db.awk omits it and cannot
-#  actually be executed directly, only via `gawk -f`.)
+# (env needs -S here; v1's data/db.awk omits it and only runs via `gawk -f`.)
 #
 # TSV -> DbReader blob + index, for src/server/dbreader.mjs.
 #
-# Input : key <TAB> value, ONE line per record, pre-sorted by key (LC_ALL=C).
-#         Consecutive lines sharing a key are concatenated, each terminated by \n.
-# Output: <outfile>        records, each NUL-terminated
-#         <outfile>.index  key <TAB> offset <TAB> size, in input order
+# Input : key <TAB> value, pre-sorted by key (LC_ALL=C); lines sharing a key are
+#         concatenated, each terminated by \n.
+# Output: <outfile> NUL-terminated records, <outfile>.index of key, offset, size.
 #
-# Differs from v1's data/db.awk:
-#   - no hardcoded default output name; `outfile` is required
-#   - fails loudly if the input is not sorted, instead of silently producing an
-#     index that dbreader.mjs cannot binary-search
+# Unlike v1's db.awk: `outfile` is required, and unsorted input fails loudly rather than
+# producing an index dbreader.mjs cannot binary-search.
 #
 # Usage: mkdb.awk -v outfile=out/afdb_desc input.tsv
 

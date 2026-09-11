@@ -1,8 +1,7 @@
 #!/bin/bash
 # Create afdb-clusters.sqlite3 from the TSVs produced by build_tables.sh.
 #
-# Indices are built AFTER the import; creating them first makes a 5.8M-row import
-# dramatically slower.
+# Indices are built AFTER the import; creating them first is far slower.
 #
 # Usage: load_db.sh <db-path> <schema.sql> <tsv-dir>
 set -euo pipefail

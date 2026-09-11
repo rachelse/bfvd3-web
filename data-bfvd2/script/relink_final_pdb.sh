@@ -1,9 +1,8 @@
 #!/bin/bash
 # Repair the /home/user2/final_pdb symlink farm after bfvd2_pdb moved out of bfvd2/.
 #
-# Non-destructive: only re-points symlinks whose target carries the stale prefix, at
-# the same files in their new location. No PDB is copied, moved or deleted. Links that
-# point elsewhere (the ProteinTTT replacements) are left alone.
+# Non-destructive: re-points only symlinks carrying the stale prefix, at the same files
+# in their new location. Nothing is copied, moved or deleted; ProteinTTT links are left.
 #
 # Usage: relink_final_pdb.sh [FARM] [--dry-run]
 set -euo pipefail

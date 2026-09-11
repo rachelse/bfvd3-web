@@ -53,11 +53,8 @@ const rank_to_idx = {
     "subsection": 41,
     "cohort" : 42,
     "series": 43,
-    // NCBI reclassified the top of the tree: Viruses (10239) is no longer a
-    // "superkingdom" but an "acellular root", and the viral hierarchy gained "realm".
-    // A rank missing from this table becomes undefined on the node, which silently drops
-    // it from anything rank-aware -- notably the Sankey, where it made Viruses vanish.
-    // Appended rather than inserted so the existing indices keep their values.
+    // NCBI moved Viruses (10239) from "superkingdom" to "acellular root" and added
+    // "realm". Appended, not inserted, so existing indices keep their values.
     "acellular root": 44,
     "cellular root": 45,
     "realm": 46,
@@ -72,8 +69,8 @@ const idx_to_rank = Array.from(Object.keys(rank_to_idx));
 
 const unknownRanks = new Set();
 
-// An unrecognised rank used to become `undefined`, which then disappeared from every
-// rank-aware code path without a word. Fall back to "no rank" and say so once.
+// An unknown rank used to become undefined and vanish from every rank-aware path
+// without a word. Fall back, and say so once.
 function rankIndex(rank) {
     if (rank in rank_to_idx) {
         return rank_to_idx[rank];

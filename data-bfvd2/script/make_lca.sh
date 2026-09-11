@@ -1,20 +1,13 @@
 #!/bin/bash
-# Per-cluster lowest common ancestor from the SEQUENCE CLUSTERING, via MMseqs2's own
-# `lca` module -- the same approach BFVD v1 used (bfvd-analysis/script/lca.sh).
+# Per-cluster LCA from the sequence clustering, via `mmseqs lca` -- as BFVD v1 did
+# (bfvd-analysis/script/lca.sh). Structure prediction plays no part here.
 #
-# What is actually being computed: for each sequence cluster, fold the NCBI taxa of its
-# members to their lowest common ancestor. Structure prediction plays no part; ProteinTTT
-# is irrelevant here.
+# The clustering is the *result* DB; the target DB only carries the key -> taxid mapping
+# and the taxonomy, and its keys must be the clustering's key space -- bfvd_v2's.
 #
-# `mmseqs lca <targetDB> <resultDB> <lcaDB>` takes the clustering as the *result* DB.
-# The target DB is only a carrier: it supplies the key -> taxid mapping and the taxonomy,
-# and its keys must be the key space the clustering was built on. Nothing of its payload
-# is read.
-#
-# That key space is bfvd_v2's. Beware: bfvd_v2 and bfvd_v2_proteinttt agree on most keys
-# but diverge at 396 of them, because short 6-character accessions order differently
-# between the two. Passing the ProteinTTT database here silently mislabels those
-# clusters, so the output is checked against the clustering TSV before being accepted.
+# Beware: bfvd_v2 and bfvd_v2_proteinttt diverge at 396 keys, where short 6-character
+# accessions order differently, so passing ProteinTTT silently mislabels those clusters.
+# The output is checked against the clustering TSV before being accepted.
 #
 # Usage:
 #   ACC2TAXID=<accession<TAB>taxid> \

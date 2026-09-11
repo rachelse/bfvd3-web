@@ -77,10 +77,8 @@ function getDescription(accession) {
     }
 }
 
-// BFVD v2 is entry-centric: every entry has its own structure and its own page, and
-// `cluster` only groups entries by sequence clustering (30% id / 90% cov) to drive the
-// members panel. Nothing is a "representative" any more, so the rep_* names are gone
-// from the API as well as the schema.
+// Entry-centric: every entry has its own structure and page; `cluster` only groups
+// them for the members panel. Nothing is a "representative", hence no rep_* names.
 const ENTRY_COLS = `
     e.accession, e.len, e.plddt, e.tax_id, e.flag, e.cluster_id,
     c.n_mem, c.avg_len, c.avg_plddt, c.is_singleton, c.lca_tax_id`;
@@ -502,9 +500,8 @@ app.get('/api/cluster/:cluster', async (req, res) => {
     } else {
         result.warning = false;
     }
-    // Species comes off the NCBI tree rather than a stored ICTV name: resolved to its
-    // species-rank ancestor, the NCBI scientific name equals the ICTV species for
-    // 176,302 of 176,330 mapped taxids, so storing both would only add a way to disagree.
+    // At species rank the NCBI name matches the ICTV species for 176,302 of 176,330
+    // mapped taxids, so it is read off the tree rather than stored twice.
     result.species = null;
     if (result.lineage_entry) {
         const species = result.lineage_entry.find((x) => x.rank === "species");
@@ -524,9 +521,8 @@ app.get('/api/cluster/:cluster', async (req, res) => {
         mapping_step: notNA(ictv.mapping_step),
     } : { id: null, accessions: [], host_category: null, mapping_step: null };
 
-    // UniProt gives a specific host organism with a taxid; ICTV only a coarse category.
-    // They are different granularities, so they are never merged -- prefer UniProt, fall
-    // back to the ICTV category, and let the UI say "NA" when neither exists.
+    // Different granularities -- UniProt names an organism, ICTV a category -- so never
+    // merged: prefer UniProt, fall back to ICTV, else "NA".
     let hosts = await sql.all("SELECT tax_id FROM taxonomy_host WHERE accession = ?", req.params.cluster);
     result.hosts = [];
     if (hosts) {
@@ -835,9 +831,8 @@ app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => 
 app.get('/api/structure/:structure', async (req, res) => {
     const structure = req.params.structure;
 
-    // An unknown accession is a client asking for something that does not exist, not a
-    // server fault: answer 404 rather than throwing a 500 with a stack trace. A stale
-    // frontend sending the literal string "undefined" used to log one per request.
+    // A client error, not a server fault: 404 rather than a 500 and a stack trace per
+    // request, which is what a stale frontend asking for "undefined" produced.
     const notFound = (db) => {
         res.status(404);
         res.removeHeader('Cache-Control');

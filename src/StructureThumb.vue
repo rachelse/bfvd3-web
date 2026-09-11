@@ -22,9 +22,8 @@ export default {
         };
     },
     watch: {
-        // A data table reuses row components across pages, so the same instance is handed
-        // a new accession rather than being recreated. Without this the row would keep
-        // showing the previous entry's structure.
+        // Data tables recycle rows across pages, handing one instance a new accession;
+        // without this the row keeps the previous entry's structure.
         accession() {
             this.url = getCachedImage(this.accession);
             this.loading = false;
@@ -40,8 +39,7 @@ export default {
             return;
         }
 
-        // Rendering is serialised and expensive, so only pay for rows the user can
-        // actually see -- a 100-row page used to render 100 thumbnails regardless.
+        // Rendering is serialised and expensive, so only pay for visible rows.
         if (typeof IntersectionObserver === 'undefined') {
             this.request();
             return;
@@ -77,8 +75,7 @@ export default {
             const requested = this.accession;
             loadImage(requested, this.$axios, this.$molstarService)
                 .then((url) => {
-                    // The row may have been recycled onto another accession while we
-                    // waited; dropping the result avoids showing the wrong structure.
+                    // The row may have been recycled while we waited.
                     if (requested === this.accession) {
                         this.url = url;
                     }
