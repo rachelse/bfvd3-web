@@ -22,7 +22,7 @@
                 <template v-slot:item.structure="prop">
                     <div style="text-align: center;">
                         <router-link :to="{ name: 'cluster', params: { cluster: prop.item.accession }}" target='_blank'>
-                            <img :src="getImage(prop.item.accession)" style="height:75px"/>
+                            <StructureThumb :accession="prop.item.accession"></StructureThumb>
                         </router-link>
                     </div>
                 </template>
@@ -158,19 +158,19 @@
     import IsSingleton from './IsSingleton.vue';
     import RangeSlider from './RangeSlider.vue';
     import ExternalLinks from "./ExternalLinks.vue";
-    import ImageMixin from "./ImageMixin";
+    import StructureThumb from "./StructureThumb.vue";
     
     export default {
         name: "foldseeksearchresult",
-        components: { 
+        components: {
             Panel,
+            StructureThumb,
             TaxSpan,
             TaxonomyAutocomplete,
             IsSingleton,
             RangeSlider,
             ExternalLinks
         },
-        mixins: [ImageMixin],
         data() {
             return {
                 response: [],
@@ -293,7 +293,6 @@
                     .then(response => {
                         this.response = response.data.result;
                         this.total = response.data.total;
-                        this.fetchImages(this.response.map(m => m.accession));
                         this.$emit('total', this.total);
                     })
                     .finally(() => {

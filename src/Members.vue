@@ -67,7 +67,7 @@
         </template>
         <template v-slot:item.structure="prop">
             <div v-ripple="{ class: `primary--text` }" style="text-align: center; cursor: pointer;" @click="$emit('select', prop.item.accession)">
-                <img :src="getImage(prop.item.accession)" style="height:75px"/>
+                <StructureThumb :accession="prop.item.accession"></StructureThumb>
             </div>
         </template>
         <!-- <template v-slot:item.flag="prop">
@@ -133,18 +133,19 @@
 </template>
 
 <script>
+import StructureThumb from "./StructureThumb.vue";
 import TaxSpan from "./TaxSpan.vue";
 import StructureViewer from "./StructureViewer.vue";
 import ExternalLinks from "./ExternalLinks.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Fragment from "./Fragment.vue";
 import Sankey from './Sankey.vue';
-import ImageMixin from './ImageMixin';
 import Panel from "./Panel.vue";
 
 export default {
     name: "members",
     components: {
+        StructureThumb,
         Panel,
         TaxSpan,
         StructureViewer,
@@ -154,7 +155,6 @@ export default {
         Sankey,
     },
     props: ["cluster"],
-    mixins: [ImageMixin],
     data() {
         return {
             headers: [
@@ -258,7 +258,6 @@ export default {
                 .then(response => {
                     this.members = response.data.result;
                     this.totalMembers = response.data.total;
-                    this.fetchImages(this.members.map(m => m.accession));
                 })
                 .catch(() => {})
                 .finally(() => {

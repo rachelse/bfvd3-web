@@ -64,7 +64,7 @@
         </template>
         <template v-slot:item.structure="prop">
             <div v-ripple="{ class: `primary--text` }" style="text-align: center; cursor: pointer;" @click="$emit('select', prop.item.accession)">
-                <img :src="getImage(prop.item.accession)" style="height:75px"/>
+                <StructureThumb :accession="prop.item.accession"></StructureThumb>
             </div>
         </template>
 
@@ -93,17 +93,18 @@
 </template>
 
 <script>
+import StructureThumb from "./StructureThumb.vue";
 import TaxSpan from "./TaxSpan.vue";
 import StructureViewer from "./StructureViewer.vue";
 import ExternalLinks from "./ExternalLinks.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Sankey from "./Sankey.vue";
-import ImageMixin from './ImageMixin';
 import Panel from "./Panel.vue";
 
 export default {
     name: "Similars",
     components: {
+        StructureThumb,
         Panel,
         TaxSpan,
         StructureViewer,
@@ -112,7 +113,6 @@ export default {
         Sankey,
     },
     props: ["cluster"],
-    mixins: [ImageMixin],
     data() {
         return {
             headers: [
@@ -236,7 +236,6 @@ export default {
                     // .similars -- default rather than blowing up in .map below.
                     this.entries = response.data.similars ?? [];
                     this.totalEntries = response.data.total ?? 0;
-                    this.fetchImages(this.entries.map(m => m.accession));
                 })
                 .catch(() => {})
                 .finally(() => {
