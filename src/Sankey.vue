@@ -13,9 +13,20 @@ export default {
 	props: ["cluster", "type"],
 	data: () => ({
 		response: null,
-		sankeyRankOrder: ["superkingdom", "kingdom", "phylum", "family", "genus", "species", "no rank"],
+		// NCBI reclassified the top of the viral tree: Viruses (10239) is an "acellular
+		// root", not a "superkingdom", and the level below it is "realm". The API returned
+		// those nodes but the diagram dropped them, because indexOf() gave -1 and they got
+		// no column -- which is why the D level was missing. "superkingdom" is gone rather
+		// than kept: no node under Viruses carries it, so it only left an empty column.
+		// Entries here are positional -- rankLabels below must stay in step.
+		sankeyRankOrder: ["acellular root", "realm", "kingdom", "phylum", "family", "genus", "species", "no rank"],
 		fullRankOrder: [
+			"acellular root",
+			"cellular root",
+			"domain",
 			"superkingdom",
+			"realm",
+			"subrealm",
 			"kingdom",
 			"subkingdom",
 			"superphylum",
@@ -294,7 +305,8 @@ export default {
 			sankeyGenerator.update(graph);
 
 			// Add rank column labels
-			const rankLabels = ["D", "K", "P", "F", "G", "S"];
+			// One per sankeyRankOrder entry, in order; the trailing "no rank" column is unlabelled.
+			const rankLabels = ["D", "R", "K", "P", "F", "G", "S"];
 			svg
 				.append("g")
 				.selectAll("text")
