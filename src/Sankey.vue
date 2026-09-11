@@ -13,13 +13,9 @@ export default {
 	props: ["cluster", "type"],
 	data: () => ({
 		response: null,
-		// NCBI reclassified the top of the viral tree: Viruses (10239) is an "acellular
-		// root", not a "superkingdom", and the level below it is "realm". The API returned
-		// those nodes but the diagram dropped them, because indexOf() gave -1 and they got
-		// no column -- which is why the D level was missing. "superkingdom" is gone rather
-		// than kept: no node under Viruses carries it, so it only left an empty column.
-		// Entries here are positional -- rankLabels below must stay in step.
-		sankeyRankOrder: ["acellular root", "realm", "kingdom", "phylum", "family", "genus", "species", "no rank"],
+		// Sent with the graph (SANKEY_RANK_ORDER in index.mjs) so the two halves cannot
+		// disagree about the columns. Empty only until the first response.
+		sankeyRankOrder: [],
 		fullRankOrder: [
 			"acellular root",
 			"cellular root",
@@ -71,6 +67,9 @@ export default {
 			this.$axios
 				.get("/cluster/" + this.cluster + "/sankey-" + this.type)
 				.then((response) => {
+					if (Array.isArray(response.data.rankOrder)) {
+						this.sankeyRankOrder = response.data.rankOrder;
+					}
 					this.response = response.data.result;
 				})
 				.catch(() => {});
@@ -239,6 +238,13 @@ export default {
 		},
 		// Main function for rendering Sankey
 		newRender(items) {
+			// Without the server's column order the layout divides by zero, so say so.
+			if (!this.sankeyRankOrder.length) {
+				console.warn("Sankey: response carried no rankOrder; is the server out of date?");
+				select(this.$refs.svg).classed("hide", true);
+				return;
+			}
+
 			const { nodes, links } = this.parseData(items);
 
 			// Check if nodes and links are not empty
@@ -304,9 +310,8 @@ export default {
 			// Re-run the layout to ensure correct vertical positioning
 			sankeyGenerator.update(graph);
 
-			// Add rank column labels
-			// One per sankeyRankOrder entry, in order; the trailing "no rank" column is unlabelled.
-			const rankLabels = ["D", "R", "K", "P", "F", "G", "S"];
+			// Rank column labels, keyed by name: positionally, inserting a rank
+			// shifted every letter after it.
 			svg
 				.append("g")
 				.selectAll("text")
@@ -317,7 +322,7 @@ export default {
 				.attr("y", height + marginBottom / 2)
 				.attr("dy", "0.35em")
 				.attr("text-anchor", "middle")
-				.text((rank, index) => rankLabels[index]);
+				.text((rank) => this.rankLabels[rank] ?? "");
 
 			// Draw rank label divider link
 			svg
@@ -472,6 +477,20 @@ export default {
 		},
 	},
 	computed: {
+		// A rank with no letter simply renders none; nothing shifts.
+		rankLabels: () => ({
+			"acellular root": "D",
+			"superkingdom": "D",
+			"domain": "D",
+			"realm": "R",
+			"kingdom": "K",
+			"phylum": "P",
+			"class": "C",
+			"order": "O",
+			"family": "F",
+			"genus": "G",
+			"species": "S",
+		}),
 		rankPalette() {
 			const interpolator = interpolateHcl(this.startColor, this.endColor);
 			const steps = this.sankeyRankOrder.length;

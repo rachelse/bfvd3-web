@@ -355,15 +355,25 @@ app.get('/api/cluster/:cluster/annotations', async (req, res) => {
 });
 
 
+// The only declaration of the diagram's rank levels, in column order; shipped with the
+// payload so Sankey.vue cannot keep a copy that drifts (it did, and the domain level
+// silently vanished). Unclassified nodes get a trailing column, excluded from the filter.
+export const SANKEY_RANK_ORDER = [
+    'acellular root',   // Viruses. NCBI reclassified 10239 away from superkingdom, and
+                        // no node under it carries superkingdom, so that rank is absent.
+    'realm',
+    'kingdom',
+    'phylum',
+    'family',
+    'genus',
+    'species',
+];
+const SANKEY_UNCLASSIFIED_RANK = 'no rank';
+
 function makeSankey(result) {
     let nodes = {};
     let links = {};
-    // Was the magic list [28, 27, 24, 12, 8, 4]. Name the ranks instead, so this cannot
-    // drift out of step with rank_to_idx, and include the ranks NCBI now uses at the top
-    // of the viral tree: Viruses is an "acellular root", not a "superkingdom", which is
-    // why it was missing from the diagram entirely.
-    const allowedRanks = ['acellular root', 'superkingdom', 'realm', 'kingdom',
-                          'phylum', 'family', 'genus', 'species']
+    const allowedRanks = SANKEY_RANK_ORDER
         .map((r) => rank_to_idx[r])
         .filter((r) => r !== undefined);
     result.forEach((x) => {
@@ -435,7 +445,10 @@ app.get('/api/cluster/:cluster/sankey-members', async (req, res) => {
         FROM entry
         WHERE cluster_id = (SELECT cluster_id FROM entry WHERE accession = ?);
     `, cluster);
-    res.send({result: makeSankey(result)});
+    res.send({
+        result: makeSankey(result),
+        rankOrder: [...SANKEY_RANK_ORDER, SANKEY_UNCLASSIFIED_RANK],
+    });
 });
 
 app.get('/api/cluster/:cluster/sankey-similars', async (req, res) => {
@@ -458,7 +471,10 @@ app.get('/api/cluster/:cluster/sankey-similars', async (req, res) => {
         FROM entry
         WHERE accession IN (${accessions.map(() => "?").join(",")});
     `, accessions);
-    res.send({result: makeSankey(result)});
+    res.send({
+        result: makeSankey(result),
+        rankOrder: [...SANKEY_RANK_ORDER, SANKEY_UNCLASSIFIED_RANK],
+    });
 });
 
 app.get('/api/cluster/:cluster', async (req, res) => {
