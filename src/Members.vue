@@ -50,7 +50,7 @@
     >
         <template v-slot:item.accession="prop">
             <ExternalLinks :accession="prop.value"></ExternalLinks><br>
-            {{ prop.item.description }}
+            <div class="description" :title="prop.item.description">{{ prop.item.description }}</div>
         </template>
         <template v-slot:header.structure="{ column }">
             {{ column.title }}
@@ -268,3 +268,14 @@ export default {
 }
 
 </script>
+
+<style scoped>
+/* Descriptions run far wider than the column, so they are clipped to one line
+   and shown in full on hover rather than wrapping and stretching every row. */
+.description {
+    max-width: 22em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>

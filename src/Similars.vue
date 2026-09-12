@@ -37,7 +37,7 @@
     >
         <template v-slot:item.accession="prop">
             <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}">{{ prop.value }}</router-link><br>
-            {{ prop.item.description }}
+            <div class="description" :title="prop.item.description">{{ prop.item.description }}</div>
         </template>
         <template v-slot:item.avg_len="prop">
             {{ prop.value.toFixed(2) }}
@@ -246,3 +246,14 @@ export default {
 }
 
 </script>
+
+<style scoped>
+/* Descriptions run far wider than the column, so they are clipped to one line
+   and shown in full on hover rather than wrapping and stretching every row. */
+.description {
+    max-width: 22em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
