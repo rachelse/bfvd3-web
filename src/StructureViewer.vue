@@ -378,9 +378,10 @@ END
                 ...defaultSpec,
                 // Drop the built-in hover label (entity/chain/polymer info we
                 // don't need) - our own lociLabels provider below replaces it
-                // with just residue type, residue number, and pLDDT.
+                // with just residue type, residue number, and pLDDT. The id must
+                // be the namespaced one or the filter matches nothing.
                 behaviors: [
-                    ...defaultSpec.behaviors.filter(b => b.transformer.id !== 'default-loci-label-provider'),
+                    ...defaultSpec.behaviors.filter(b => b.transformer.id !== 'ms-plugin.default-loci-label-provider'),
                     PluginSpec.Behavior(MAQualityAssessment),
                 ],
                 layout: {
