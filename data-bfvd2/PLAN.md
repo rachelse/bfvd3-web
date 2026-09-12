@@ -9,7 +9,7 @@ they survive it being removed:
 | Path | Contents |
 |---|---|
 | `data-bfvd2/script/` | build scripts (tracked) |
-| `data-bfvd2/out/` | **the staged dataset, 14 GB** — swap this into `data/` (§3.16) |
+| `data-bfvd2/out/` | **the staged dataset, 83 GB** — swap this into `data/` (§3.16) |
 | `data-bfvd2/taxdump/` | NCBI dump the build read |
 | `data-bfvd2/tmp/` | intermediate TSVs |
 | `data-bfvd2/log/` | per-step build logs |
@@ -31,10 +31,10 @@ From `$DATA_PATH` at boot (`src/server/index.mjs:17-62`):
 | `afdb_ca` + `.index` (+`.dbtype`) | 351,242 | 5,776,417 |
 | `afdb_plddt` + `.index` | 351,241 | 5,776,417 |
 | `afdb_desc` + `.index` | 3,248,874 | 5,776,417 |
-| `ava_db` + `.index` | 345,393 | deferred (§8) — now **optional**, server runs without it |
+| `ava_db` + `.index` | 345,393 | 5,662,288 (98.0% of entries; optional, server runs without it) |
 | `warning_db` | absent | skipped (server treats as optional) |
 
-Built size **14 GB**, plus ~80 GB once `ava_db` lands (v1: 1.7 GB total).
+Built size **83 GB** (v1: 1.7 GB).
 
 > **Every `.index` must be `LC_ALL=C`-sorted.** `dbreader.mjs` binary-searches it, so an
 > unsorted index returns wrong records silently instead of erroring. `mkdb.awk` folds
@@ -102,9 +102,11 @@ only 28 differ. Most BFVD taxids are sub-species nodes (taxids 10246–10253 are
 binomials at species rank — node 10245 already reads *Orthopoxvirus vaccinia*. So the
 entry page reads species off the NCBI tree.
 
-**`ictv_id` and `ictv_accession` are kept** for outbound ICTV / GenBank links (your
-call — drop later if unused). **`ictv_host` is kept because it is not derivable from
-NCBI** and is what lifts host coverage from 29.2% to 75.4%.
+**`ictv_id` is kept** and links out to `https://ictv.global/id/<ICTV_ID>`.
+**`ictv_accession` was dropped** (your call): it held the VMR GenBank exemplars, which
+the entry page does not use; the release metadata TSV still carries them.
+**`ictv_host` is kept because it is not derivable from NCBI** and is what lifts host
+coverage from 29.2% to 75.4%.
 
 **3.9 No `rep_` anywhere:** `accession` / `len` / `plddt` in the schema, the API *and*
 the frontend. I first kept the API aliased to the v1 names to avoid touching 45
@@ -173,7 +175,7 @@ creates the indices *after* the import (far faster at this size):
 ```sql
 entry(accession PK, len, plddt, tax_id, flag, cluster_id)        -- 5,776,417
 cluster(cluster_id PK, n_mem, avg_len, avg_plddt, is_singleton, lca_tax_id) -- 647,298
-ictv(tax_id PK, ictv_id, ictv_accession, ictv_host, mapping_step)  -- 208,513
+ictv(tax_id PK, ictv_id, ictv_host, mapping_step)                  -- 208,513
 taxonomy_host(accession, tax_id)                                 -- 2,406,200
 taxonomy_lineage(parent, child)                                  -- 3,157,719
 ```
@@ -238,10 +240,13 @@ the already-commented tab from `Search.vue`; delete two endpoints from `index.mj
 One bug fixes itself: the member FASTA export (`:644`) is broken in v1 because `afdb`
 held only representatives; in v2 every entry has a sequence.
 
-**5.4 Entry page** — the API now returns `species` (resolved from the NCBI lineage,
-§3.8), `ictv` (`id`, `accessions[]`, `host_category`, `mapping_step`, with `'NA'`
-normalized to `null`) and `host_source` (`uniprot` | `ictv` | `null`). Still to do:
-render them in `Cluster.vue`, plus the §3.11 members tooltip.
+**5.4 Entry page** — the API returns `ictv` (`id`, `host_category`, `mapping_step`,
+with `'NA'` normalized to `null`) and `host_source` (`uniprot` | `ictv` | `null`);
+`species` was dropped (your call) since the lineage already shows it. `Cluster.vue`
+renders the summary as: accession / length / pLDDT / singleton on the first row,
+predictor / proteome / host on the second, then protein name and taxonomy full-width.
+The ICTV id sits beside the Taxonomy label as a link; the host's origin tag was
+dropped. Still to do: the §3.11 members tooltip.
 
 ---
 
@@ -279,7 +284,7 @@ script: it cannot run until the entry-centric server changes land. See §7.
 | 7. Load SQLite (`load_db.sh`) | 1 min | **done** — 814 MB, all five tables at expected counts |
 | 8. `ncbitaxonomy.json` | 1 min | **done** — 223 MB |
 | 9. `validate.sh` | 3 min | **done** — **ALL CHECKS PASSED** (§6) |
-| 10. `ava_db` | — | blocked: file still copying (§8) |
+| 10. `ava_db` | 2 h | **done** — 3,806,020,256 hits, 69 GB, 5,662,288 queries |
 | 11a. Code: `is_singleton` rename + `flag` (§5.1) | — | **done** — frontend builds clean, no `is_dark` left in `src/` |
 | 11b. Code: remove GO (§5.2) | — | **done** — endpoints, components, route and dead helper all gone |
 | 12a. Code: entry-centric server (§5.3) | — | **done** — smoke-tested against `out/`, see below |
@@ -343,11 +348,11 @@ branches, so §5 was re-verified against `bfvd2`.
 
 ## 8. Open / needs you
 
-**The AVA file — one question.** Does it cover all 5,776,417 entries, or only the
-647,298 cluster representatives? That decides whether "Similar entries" appears on
-every page or needs a fallback on non-representative ones (most naturally: show the
-representative's hits, labelled as such). I can measure it myself once the copy
-finishes — it was still growing at 01:46 — but if you know, that saves a pass over
-464 GB.
+**Nothing blocking.** The AVA landed and is built: 3,806,020,256 hits over 5,662,288
+queries, covering 98.0% of entries. The 114,129 entries with no hit show an empty
+"Similar entries" panel, which the server already returns as `[]`.
 
-Everything else is settled; §7 shows what is built and what is left to run.
+Remaining, when you want them:
+
+1. **Swap `out/` into `data/`** (§3.16) -- yours.
+2. **Members tooltip (§3.11)** -- the only §5 item still unrendered.
