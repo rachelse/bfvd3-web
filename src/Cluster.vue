@@ -79,8 +79,7 @@
                     Accession
                 </dt>
                 <dd>
-                    <ExternalLinks :accession="response.accession"></ExternalLinks><br>
-                    {{ response.description }}
+                    <ExternalLinks :accession="response.accession"></ExternalLinks>
                 </dd>
                 </div>
                 <div>
@@ -107,18 +106,59 @@
                     {{ response.is_singleton ? 'yes' : 'no' }}
                 </dd>
                 </div>
-                <div style=" grid-area: 2 / 1 / 3 / 5;">
+
+                <div>
                 <dt>
-                    Taxonomy
+                    Predictor
+                </dt>
+                <dd>
+                    <Fragment :flag="response.flag"></Fragment>
+                </dd>
+                </div>
+                <div>
+                <dt>
+                    Proteome
+                </dt>
+                <dd>
+                    <template v-if="response.proteome">
+                        <a :href="'https://www.uniprot.org/proteomes/' + response.proteome" target="_blank" rel="noopener">{{ response.proteome }}</a>
+                    </template>
+                    <template v-else>NA</template>
+                </dd>
+                </div>
+                <div style="grid-area: 2 / 3 / 3 / 5;">
+                <dt>
+                    Host
+                </dt>
+                <dd>
+                    <!-- UniProt names an organism, ICTV only a coarse category. -->
+                    <template v-if="response.host_source === 'uniprot'">
+                        <template v-for="(taxonomy, index) in response.hosts" :key="taxonomy.id"><TaxSpan :taxonomy="taxonomy"></TaxSpan><template v-if="index < (response.hosts.length -1)">,&nbsp;</template></template>
+                    </template>
+                    <template v-else-if="response.host_source === 'ictv'">
+                        {{ response.ictv.host_category }}
+                    </template>
+                    <template v-else>NA</template>
+                </dd>
+                </div>
+
+                <!-- The protein name and taxonomy run long, so each spans the grid
+                     rather than being squeezed into a quarter-width column. -->
+                <div style="grid-area: 3 / 1 / 4 / 5;">
+                <dt>
+                    Protein name
+                </dt>
+                <dd>
+                    {{ response.description ? response.description.trim() : 'NA' }}
+                </dd>
+                </div>
+
+                <div style="grid-area: 4 / 1 / 5 / 5;">
+                <dt>
+                    Taxonomy<a v-if="response.ictv && response.ictv.id" class="annot-label" :href="'https://ictv.global/id/' + response.ictv.id" target="_blank" rel="noopener">{{ response.ictv.id }}</a>
                 </dt>
                 <dd>
                     <template v-for="(taxonomy, index) in response.lineage_entry" :key="taxonomy.id"><TaxSpan :taxonomy="taxonomy"></TaxSpan><template v-if="index < (response.lineage_entry.length -1)"> &#187;&nbsp;</template></template>
-                </dd>
-                <dt v-if="response.hosts.length > 0">
-                    Host
-                </dt>
-                <dd v-if="response.hosts.length > 0">
-                    <template v-for="(taxonomy, index) in response.hosts" :key="taxonomy.id"><TaxSpan :taxonomy="taxonomy"></TaxSpan><template v-if="index < (response.hosts.length -1)"> ,&nbsp;</template></template>
                 </dd>
                 </div>
                 </dl>
@@ -241,6 +281,7 @@ import StructureViewer from "./StructureViewer.vue";
 import Members from "./Members.vue";
 import TaxSpan from "./TaxSpan.vue";
 import ExternalLinks from "./ExternalLinks.vue";
+import Fragment from "./Fragment.vue";
 import Similars from "./Similars.vue";
 import MsaLogoPlot from "./logoplot/MsaLogoPlot.vue"
 // import Annotations from "./Annotations.vue";
@@ -253,6 +294,7 @@ export default {
         Members,
         TaxSpan,
         ExternalLinks,
+        Fragment,
         Similars,
         MsaLogoPlot
         // Annotations,
@@ -330,6 +372,23 @@ dl {
 
 dt {
     font-weight: bold;
+}
+
+.annot-label {
+    font-size: 0.75em;
+    opacity: 0.7;
+    font-weight: normal;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    padding: 0 0.35em;
+    margin-left: 0.5em;
+    white-space: nowrap;
+}
+
+a.annot-label {
+    text-decoration: none;
+    color: #9ED19F;
+    opacity: 1;
 }
 
 @media screen and (min-width: 961px) {

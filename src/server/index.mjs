@@ -81,6 +81,7 @@ function getDescription(accession) {
 // them for the members panel. Nothing is a "representative", hence no rep_* names.
 const ENTRY_COLS = `
     e.accession, e.len, e.plddt, e.tax_id, e.flag, e.cluster_id,
+    e.proteome,
     c.n_mem, c.avg_len, c.avg_plddt, c.is_singleton, c.lca_tax_id`;
 
 const ENTRY_FROM = `FROM entry AS e JOIN cluster AS c ON e.cluster_id = c.cluster_id`;
@@ -500,26 +501,16 @@ app.get('/api/cluster/:cluster', async (req, res) => {
     } else {
         result.warning = false;
     }
-    // At species rank the NCBI name matches the ICTV species for 176,302 of 176,330
-    // mapped taxids, so it is read off the tree rather than stored twice.
-    result.species = null;
-    if (result.lineage_entry) {
-        const species = result.lineage_entry.find((x) => x.rank === "species");
-        if (species) {
-            result.species = species;
-        }
-    }
-
-    // ICTV identity for outbound links. Absent values are the literal 'NA' rather than
-    // NULL, so normalize them away before they reach the UI.
-    const ictv = await sql.get("SELECT ictv_id, ictv_accession, ictv_host, mapping_step FROM ictv WHERE tax_id = ?", String(result.tax_id ? result.tax_id.id : ''));
+    // 'NA' is the storage convention for absent, not something to render.
     const notNA = (v) => (v && v !== 'NA') ? v : null;
+    result.proteome = notNA(result.proteome);
+
+    const ictv = await sql.get("SELECT ictv_id, ictv_host, mapping_step FROM ictv WHERE tax_id = ?", String(result.tax_id ? result.tax_id.id : ''));
     result.ictv = ictv ? {
         id: notNA(ictv.ictv_id),
-        accessions: notNA(ictv.ictv_accession) ? ictv.ictv_accession.split(';') : [],
         host_category: notNA(ictv.ictv_host),
         mapping_step: notNA(ictv.mapping_step),
-    } : { id: null, accessions: [], host_category: null, mapping_step: null };
+    } : { id: null, host_category: null, mapping_step: null };
 
     // Different granularities -- UniProt names an organism, ICTV a category -- so never
     // merged: prefer UniProt, fall back to ICTV, else "NA".
