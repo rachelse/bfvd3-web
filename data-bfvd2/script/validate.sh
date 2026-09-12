@@ -110,9 +110,9 @@ else
     [ "$badsing" -eq 0 ] && ok "is_singleton == (n_mem==1) everywhere" || bad "$badsing rows disagree"
 
     head_ "7. ICTV 'NA' discipline"
-    nulls=$(sqlite3 "$DB" "SELECT COUNT(*) FROM ictv WHERE ictv_id IS NULL OR ictv_id='' OR ictv_accession IS NULL OR ictv_accession='' OR ictv_host IS NULL OR ictv_host='' OR mapping_step IS NULL OR mapping_step='';")
+    nulls=$(sqlite3 "$DB" "SELECT COUNT(*) FROM ictv WHERE ictv_id IS NULL OR ictv_id='' OR ictv_host IS NULL OR ictv_host='' OR mapping_step IS NULL OR mapping_step='';")
     [ "$nulls" -eq 0 ] && ok "no NULL or empty ICTV values" || bad "$nulls ICTV rows are NULL/empty"
-    slash=$(sqlite3 "$DB" "SELECT COUNT(*) FROM ictv WHERE ictv_id='N/A' OR ictv_accession='N/A' OR ictv_host='N/A' OR mapping_step='N/A';")
+    slash=$(sqlite3 "$DB" "SELECT COUNT(*) FROM ictv WHERE ictv_id='N/A' OR ictv_host='N/A' OR mapping_step='N/A';")
     [ "$slash" -eq 0 ] && ok "no surviving 'N/A' (normalized to 'NA')" || bad "$slash rows still carry 'N/A'"
     mapped=$(sqlite3 "$DB" "SELECT COUNT(*) FROM ictv WHERE ictv_id<>'NA';")
     echo "  ictv_id mapped: $mapped / $n_ictv"

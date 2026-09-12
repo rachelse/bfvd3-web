@@ -11,7 +11,10 @@ CREATE TABLE entry (
     plddt      REAL,              -- mean pLDDT of this entry
     tax_id     INTEGER,           -- NCBI taxid of the source organism
     flag       INTEGER,           -- 1 = ColabFold-AF2, 2 = ESMFold+ProteinTTT_MSA
-    cluster_id TEXT               -- -> cluster.cluster_id
+    cluster_id TEXT,              -- -> cluster.cluster_id
+    -- UniProt proteome. Where an entry lists several, a reference proteome is preferred,
+    -- else the first listed. 'NA' for the 3.2M entries UniProt assigns to none.
+    proteome   TEXT
 );
 
 CREATE TABLE cluster (
@@ -46,8 +49,7 @@ CREATE TABLE taxonomy_host (
 -- page shows UniProt hosts when present, else this category, else 'NA'.
 CREATE TABLE ictv (
     tax_id         TEXT PRIMARY KEY,
-    ictv_id        TEXT NOT NULL,  -- 'ICTV19911441' | 'NA'
-    ictv_accession TEXT NOT NULL,  -- GenBank exemplar(s), ';'-joined | 'NA'
-    ictv_host      TEXT NOT NULL,  -- host category, ';'-joined | 'NA'
-    mapping_step   TEXT NOT NULL   -- how the taxid was mapped | 'NA'
+    ictv_id      TEXT NOT NULL,  -- 'ICTV19911441' | 'NA'
+    ictv_host    TEXT NOT NULL,  -- host category, ';'-joined | 'NA'
+    mapping_step TEXT NOT NULL   -- how the taxid was mapped | 'NA'
 );

@@ -1,9 +1,9 @@
 #!/bin/bash
 # Build the five import TSVs for the BFVD v2 webserver database.
 #
-#   entry.tsv                    accession, len, plddt, tax_id, flag, cluster_id
+#   entry.tsv                    accession, len, plddt, tax_id, flag, cluster_id, proteome
 #   cluster.tsv                  cluster_id, n_mem, avg_len, avg_plddt, is_singleton, lca_tax_id
-#   ictv.tsv                     tax_id, ictv_id, ictv_accession, ictv_host, mapping_step
+#   ictv.tsv                     tax_id, ictv_id, ictv_host, mapping_step
 #   taxonomy-accession_host.tsv  accession, tax_id
 #   taxonomy-parent_child.tsv    parent, child
 #
@@ -30,12 +30,14 @@ TAXIDS="$B/data/bfvd2_uniprot_2025_03_1st-acc_taxid_taxname_host.tsv"
 ICTV_MAP="$A/09_ictv_taxonomy_mapping/results/bfvd_taxid_ictv_mapping.tsv"
 ICTV_ACC="$A/09_ictv_taxonomy_mapping/results/vmr_accessions_long.tsv"
 ICTV_HOST="$A/07_host_coverage/results/ictv_host_by_species.tsv"
+UNIPROT="$B/data/uniprot_2025_03_virus_bfvd2.tsv"
+REFPROT="$B/uniprot_proteome/proteomes_proteome_type_REFERENCE_AND_s_2026_09_01.tsv"
 NODES="$TAX/nodes.dmp"
 MERGED="$TAX/merged.dmp"
 ROOT=10239
 
 for f in "$SEQCLU" "$SCORES" "$LENGTHS" "$TAXIDS" "$ICTV_MAP" "$ICTV_ACC" \
-         "$ICTV_HOST" "$NODES" "$MERGED" "$LCA"; do
+         "$ICTV_HOST" "$UNIPROT" "$REFPROT" "$NODES" "$MERGED" "$LCA"; do
     [ -f "$f" ] || { echo "missing input: $f" >&2; exit 1; }
 done
 mkdir -p "$OUT"
@@ -54,22 +56,42 @@ gawk -F'\t' '
     FNR == NR && FILENAME == LEN  { len[$1] = $2; next }
     FILENAME == SCO { if (FNR > 1) { pl[$1] = $3; fl[$1] = ($5 == "ProteinTTT" ? 2 : 1) } next }
     FILENAME == TAX { tx[$1] = $2 + 0; next }
+    FILENAME == REF { if (FNR > 1) refprot[$1] = 1; next }
+    # UniProt lists proteomes as "UP000127881: Genome; UP000144089: Genome". Most entries
+    # have one; 69,599 have several, and 18.5% of those include a reference proteome.
+    # Prefer a reference, else take the first as listed.
+    FILENAME == UNI {
+        if (FNR > 1 && $6 != "") {
+            s = $6; chosen = ""; first = ""
+            while (match(s, /UP[0-9]+/)) {
+                id = substr(s, RSTART, RLENGTH)
+                if (first == "") first = id
+                if (chosen == "" && (id in refprot)) chosen = id
+                s = substr(s, RSTART + RLENGTH)
+            }
+            if (chosen == "") chosen = first
+            if (chosen != "") prot[$1] = chosen
+        }
+        next
+    }
     {
         c = acc($1); a = acc($2)
         if (!(a in len)) { m_len++; len[a] = 0 }
         if (!(a in pl))  { m_pl++;  pl[a]  = 0 }
         if (!(a in tx))  { m_tx++;  tx[a]  = 0 }
-        print a "\t" len[a] "\t" pl[a] "\t" tx[a] "\t" (a in fl ? fl[a] : 1) "\t" c
+        if (a in prot) n_prot++; else m_prot++
+        print a "\t" len[a] "\t" pl[a] "\t" tx[a] "\t" (a in fl ? fl[a] : 1) "\t" c \
+              "\t" (a in prot ? prot[a] : "NA")
         n++
     }
     END {
-        printf("  entries %d, missing len=%d plddt=%d tax=%d\n",
-               n, m_len+0, m_pl+0, m_tx+0) > "/dev/stderr"
+        printf("  entries %d, missing len=%d plddt=%d tax=%d; proteome %d, none %d\n",
+               n, m_len+0, m_pl+0, m_tx+0, n_prot+0, m_prot+0) > "/dev/stderr"
         if (m_len + m_pl + m_tx > 0)
             print "  WARNING: rows with missing metadata written as 0" > "/dev/stderr"
     }
-' LEN="$LENGTHS" SCO="$SCORES" TAX="$TAXIDS" \
-  "$LENGTHS" "$SCORES" "$TAXIDS" "$SEQCLU" > "$OUT/entry.tsv"
+' LEN="$LENGTHS" SCO="$SCORES" TAX="$TAXIDS" REF="$REFPROT" UNI="$UNIPROT" \
+  "$LENGTHS" "$SCORES" "$TAXIDS" "$REFPROT" "$UNIPROT" "$SEQCLU" > "$OUT/entry.tsv"
 
 # ---------------------------------------------------------------- cluster.tsv
 # Grouped by cluster_id so only one cluster is resident at a time. The LCA is joined in
@@ -106,31 +128,18 @@ say "ictv.tsv"
 gawk -F'\t' '
     BEGIN { RS = "\r?\n" }
     function na(v) { return (v == "" || v == "N/A" || v == "NA" || v == "-") ? "NA" : v }
-    FILENAME == ACC { if (FNR > 1 && $5 != "" && !(($1 SUBSEP $5) in seen)) {
-                          seen[$1, $5] = 1
-                          ia[$1] = ($1 in ia ? ia[$1] ";" $5 : $5) } next }
     FILENAME == HST { if (FNR > 1 && $3 != "") ih[$1] = $3; next }
     FNR > 1 {
         id = na($3)
-        if (id != "NA") {
-            mapped++
-            a = "NA"
-            if ($3 in ia) {          # sort for a deterministic, diffable list
-                k = split(ia[$3], parts, ";")
-                asort(parts)
-                a = parts[1]
-                for (j = 2; j <= k; j++) a = a ";" parts[j]
-            }
-            h = na($3 in ih ? ih[$3] : "")
-        } else { a = "NA"; h = "NA" }
-        if (a != "NA") wa++
+        h = (id != "NA") ? na($3 in ih ? ih[$3] : "") : "NA"
+        if (id != "NA") mapped++
         if (h != "NA") wh++
-        print $1 "\t" id "\t" a "\t" h "\t" na($5)
+        print $1 "\t" id "\t" h "\t" na($5)
         n++
     }
-    END { printf("  taxids %d; mapped %d, with accession %d, with host %d\n",
-                 n, mapped+0, wa+0, wh+0) > "/dev/stderr" }
-' ACC="$ICTV_ACC" HST="$ICTV_HOST" "$ICTV_ACC" "$ICTV_HOST" "$ICTV_MAP" > "$OUT/ictv.tsv"
+    END { printf("  taxids %d; mapped %d, with host %d\n",
+                 n, mapped+0, wh+0) > "/dev/stderr" }
+' HST="$ICTV_HOST" "$ICTV_HOST" "$ICTV_MAP" > "$OUT/ictv.tsv"
 
 # ------------------------------------------- taxonomy-accession_host.tsv
 # UniProt "Virus hosts" is a '; '-joined list of 'Name (...) [TaxID: N]'.
