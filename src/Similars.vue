@@ -24,7 +24,9 @@
     </template>
 
 <template v-slot:content>
+    <div class="table-scroll">
     <v-data-table-server
+        mobile-breakpoint="sm"
         v-if="$route.params.cluster"
         :headers="headers"
         :items="entries"
@@ -69,13 +71,18 @@
         </template>
 
         <template v-slot:header.lca_tax_id="{ column }">
+                <!-- In the stacked card layout Vuetify reuses this slot as each card's
+                     row label, where a filter widget makes no sense; show the plain
+                     column title instead. -->
                 <TaxonomyAutocomplete
+                    v-if="!$vuetify.display.xs"
                     :cluster="cluster"
                     v-model="options.tax_id"
                     :urlFunction="(a, b) => '/cluster/' + a + '/similars/taxonomy/' + b"
                     :options="requestOptions"
                     :disabled="taxAutocompleteDisabled">
                 </TaxonomyAutocomplete>
+                <template v-else>{{ column.title }}</template>
         </template>
 
         <template v-slot:item.lca_tax_id="prop">
@@ -88,6 +95,7 @@
             </v-chip>
         </template>
     </v-data-table-server>
+    </div>
 </template>
 </Panel>
 </template>
@@ -144,11 +152,6 @@ export default {
                     title: "Lowest common ancestor",
                     value: "lca_tax_id",
                     sortable: false,
-                },
-                {
-                    title: "Singleton cluster",
-                    value: "is_singleton",
-                    sortable: true,
                 },
                 {
                     title: "pLDDT",
@@ -254,6 +257,39 @@ export default {
     max-width: 22em;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* A flex item will not shrink below its content unless min-width is set, so
+   without this the table pushes the panel past the card and is clipped by its
+   overflow-x:hidden rather than scrolling. */
+.table-scroll {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.table-scroll :deep(.v-table__wrapper) {
+    overflow-x: auto;
+}
+
+/* Overlay scrollbars are invisible until scrolled, so give this one a track. */
+.table-scroll :deep(.v-table__wrapper)::-webkit-scrollbar {
+    height: 10px;
+}
+
+.table-scroll :deep(.v-table__wrapper)::-webkit-scrollbar-track {
+    background: rgba(128, 128, 128, 0.12);
+}
+
+.table-scroll :deep(.v-table__wrapper)::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.55);
+    border-radius: 5px;
+}
+
+/* Keep cells on one line so the table holds its natural width and scrolls,
+   except in the stacked card layout where values need to wrap. */
+.table-scroll :deep(tr:not(.v-data-table__tr--mobile)) > th,
+.table-scroll :deep(tr:not(.v-data-table__tr--mobile)) > td {
     white-space: nowrap;
 }
 </style>

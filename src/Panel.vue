@@ -64,6 +64,9 @@ export default {
 .panel-content {
     flex: 1 1 auto;
     min-height: 0;
+    /* Let wide content shrink rather than push the panel past the card, which
+       clips it with overflow-x:hidden. */
+    min-width: 0;
 }
 
 .panel-root header, .panel-content {

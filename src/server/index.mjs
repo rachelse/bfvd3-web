@@ -555,7 +555,7 @@ app.get('/api/cluster/:cluster/members', async (req, res) => {
     let total = 0;
     if (req.query.tax_id) {
         result = await sql.all(`
-        SELECT accession, tax_id, flag
+        SELECT accession, tax_id, flag, plddt
             FROM entry
             WHERE cluster_id = (SELECT cluster_id FROM entry WHERE accession = ?) ${flagFilter}
             ORDER BY rowid;
@@ -593,7 +593,7 @@ app.get('/api/cluster/:cluster/members', async (req, res) => {
             paginate_query = "LIMIT ? OFFSET ?";
         }
         result = await sql.all(`
-        SELECT accession, tax_id, flag
+        SELECT accession, tax_id, flag, plddt
             FROM entry
             WHERE cluster_id = (SELECT cluster_id FROM entry WHERE accession = ?) ${flagFilter}
             ORDER BY rowid
