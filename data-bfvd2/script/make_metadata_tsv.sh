@@ -2,8 +2,10 @@
 # Build the BFVD v2 release metadata table: one fully-denormalised row per entry.
 #
 # Two variants are written, differing only in the proteome_id column:
-#   *_all-proteomes.tsv  every proteome the entry belongs to, ';'-joined
-#   *_ref-proteome.tsv   one proteome, preferring a UniProt reference proteome
+#   bfvd2_metadata.tsv               the default: every proteome the entry belongs to,
+#                                    ';'-joined
+#   bfvd2_metadata_ref-proteome.tsv  the variant: one proteome, preferring a UniProt
+#                                    reference proteome
 #
 # Absent values are the literal string NA, never empty (PLAN 4.2).
 #
@@ -19,39 +21,29 @@ INTEG="$ROOT/proteinttt/bfvd2_final_release/bfvd2_proteinttt_integrated.tsv"
 MSA="$ROOT/data/bfvd2_scores_msa.tsv"
 HOST="$ROOT/analyses/07_host_coverage/results/bfvd_host_augmented.tsv"
 ICTVMAP="$ROOT/analyses/09_ictv_taxonomy_mapping/results/bfvd_taxid_ictv_mapping.tsv"
-ICTVACC="$ROOT/analyses/09_ictv_taxonomy_mapping/results/vmr_accessions_long.tsv"
 REFPROT="$ROOT/uniprot_proteome/proteomes_proteome_type_REFERENCE_AND_s_2026_09_01.tsv"
 
-for f in "$DB.lookup" "$DB.index" "$DESC" "$INTEG" "$MSA" "$HOST" "$ICTVMAP" "$ICTVACC" "$REFPROT"; do
+for f in "$DB.lookup" "$DB.index" "$DESC" "$INTEG" "$MSA" "$HOST" "$ICTVMAP" "$REFPROT"; do
     [ -s "$f" ] || { echo "missing input: $f" >&2; exit 1; }
 done
 mkdir -p "$OUT"
 
-ALL="$OUT/bfvd2_metadata_all-proteomes.tsv"
+ALL="$OUT/bfvd2_metadata.tsv"
 REF="$OUT/bfvd2_metadata_ref-proteome.tsv"
 
 echo "building $ALL and $REF"
 LC_ALL=C gawk -F'\t' -v OFS='\t' \
     -v desc="$DESC" -v integ="$INTEG" -v msa="$MSA" -v host="$HOST" \
-    -v ictvmap="$ICTVMAP" -v ictvacc="$ICTVACC" -v refprot="$REFPROT" \
+    -v ictvmap="$ICTVMAP" -v refprot="$REFPROT" \
     -v outall="$ALL" -v outref="$REF" '
 function na(v) { return (v == "" || v == "N/A" || v == "NA") ? "NA" : v }
 
 BEGIN {
-    # --- ICTV exemplar (GenBank) accessions, ictv_id -> "acc1;acc2;..." ---
-    while ((getline < ictvacc) > 0) {
-        nf = split($0, f, "\t")
-        if (f[1] == "ictv_id") continue
-        if (f[5] == "") continue
-        ia[f[1]] = (f[1] in ia) ? ia[f[1]] ";" f[5] : f[5]
-    }
-    close(ictvacc)
-
-    # --- taxid -> ictv_id, ictv_species ---
+    # --- taxid -> ictv_id ---
     while ((getline < ictvmap) > 0) {
         nf = split($0, f, "\t")
         if (f[1] == "taxid") continue
-        ictv[f[1]] = na(f[3]) SUBSEP na(f[4])
+        ictv[f[1]] = na(f[3])
     }
     close(ictvmap)
 
@@ -89,7 +81,12 @@ BEGIN {
         nf = split($0, f, "\t")
         if (f[1] == "id") continue
         model = (f[5] == "ColabFold") ? "ColabFold-AF2" : f[5]
-        conf[f[1]] = sprintf("%.2f", f[3]) SUBSEP na(f[4]) SUBSEP na(model)
+        # pTM was never recomputed for ProteinTTT entries: integrateProteinTTT.sh
+        # overwrites only the pLDDT field, so the stored pTM still describes the
+        # ColabFold model that ProteinTTT replaced.  Publish NA rather than a pTM for a
+        # structure this release does not ship.
+        ptm = (f[5] == "ProteinTTT") ? "NA" : na(f[4])
+        conf[f[1]] = sprintf("%.2f", f[3]) SUBSEP ptm SUBSEP na(model)
     }
     close(integ)
 
@@ -111,7 +108,7 @@ BEGIN {
 
     hdr = "accession" OFS "protein_name" OFS "length" OFS "plddt" OFS "ptm" OFS "model" \
           OFS "basemsa" OFS "loganmsa" OFS "taxid" OFS "taxname" OFS "ictv_id" \
-          OFS "ictv_species" OFS "ictv_accession" OFS "uniprot_host" OFS "ictv_host_category" \
+          OFS "uniprot_host" OFS "ictv_host_category" \
           OFS "proteome_id"
     print hdr > outall
     print hdr > outref
@@ -129,16 +126,14 @@ FILENAME == ARGV[1] { dlen[$1] = $3 - 2; next }
     split(depth[acc], d, SUBSEP)
     split(hs[acc],    h, SUBSEP)
     tid = (acc in hs) ? h[1] : "NA"
-    split((tid in ictv) ? ictv[tid] : "NA" SUBSEP "NA", v, SUBSEP)
-
-    iacc = (v[1] != "NA" && (v[1] in ia)) ? ia[v[1]] : "NA"
+    iid = (tid in ictv) ? ictv[tid] : "NA"
 
     common = acc OFS ((acc in pname) ? pname[acc] : "NA") OFS dlen[key] \
         OFS ((acc in conf)  ? c[1] : "NA") OFS ((acc in conf)  ? c[2] : "NA") \
         OFS ((acc in conf)  ? c[3] : "NA") \
         OFS ((acc in depth) ? d[1] : "NA") OFS ((acc in depth) ? d[2] : "NA") \
         OFS tid OFS ((acc in hs) ? h[2] : "NA") \
-        OFS v[1] OFS v[2] OFS iacc \
+        OFS iid \
         OFS ((acc in hs) ? h[3] : "NA") OFS ((acc in hs) ? h[4] : "NA")
 
     print common OFS ((acc in pall) ? pall[acc] : "NA") > outall
