@@ -20,7 +20,7 @@
                                 BFVD
                             </h1>
                             <h4 class="subheading">
-                                The missing viral bits of the <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener">AlphaFold database</a>
+                                Completing the structural coverage of viral proteins in <a href="https://uniprot.org" target="_blank" rel="noopener">UniProt</a>
                             </h4>
                             
                             <br>
