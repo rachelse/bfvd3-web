@@ -1,7 +1,7 @@
 <template>
 
-<v-row style="margin:1em;">
-    <v-col cols="12" md="7" lg="8">
+<v-row style="margin:0em;">
+    <v-col cols="12" md="3" lg="8">
     <panel fill-height>
         <template v-slot:header>
             Entry: {{ response ? response.accession : "Loading..." }}
@@ -230,7 +230,7 @@
     </panel>
     </v-col>
     <v-col cols="12" md="5" lg="4">
-    <Panel class="repr-structure" fill-height>
+    <Panel class="repr-structure" fill-height >
         <template v-slot:header>
             Structure
         </template>
@@ -387,19 +387,22 @@ dt {
 
 a.annot-label {
     text-decoration: none;
-    color: #9ED19F;
+    /* Box keeps the BFVD green; the text takes the surrounding default colour. The base
+       rule draws the border in currentColor, so it has to be set explicitly here. */
+    color: inherit;
+    border-color: #9ED19F;
     opacity: 1;
 }
 
 @media screen and (min-width: 961px) {
     .repr-structure {
-        margin-left: 0.5em;
+        margin-left: 0em;
     }
 }
 
 @media screen and (max-width: 960px) {
     .repr-structure {
-        margin-top: 1em;
+        margin-top: 0em;
     }
 }
 </style>

@@ -1,18 +1,20 @@
 <template>
-<Panel style="margin-top: 1em;" collapsible>
+<Panel style="margin-top: 0em;" collapsible>
     <template v-slot:header>
-        Sequence cluster members
-        <v-tooltip top>
-            <template v-slot:activator="{ props }">
-                <span v-bind="props">
-                    <v-icon size="small" v-bind="props">{{ $MDI.HelpCircleOutline }}</v-icon>
+        <span class="d-inline-flex align-center ga-1">
+            Sequence cluster members
+            <v-tooltip top>
+                <template v-slot:activator="{ props }">
+                    <span v-bind="props" class="d-inline-flex align-center">
+                        <v-icon size="small" v-bind="props">{{ $MDI.HelpCircleOutline }}</v-icon>
+                    </span>
+                </template>
+                <span>
+                    Other BFVD entries in the same sequence cluster
+                    (MMseqs2, 30% identity, 90% coverage)
                 </span>
-            </template>
-            <span>
-                Other BFVD entries in the same sequence cluster
-                (MMseqs2, 30% identity, 90% coverage)
-            </span>
-        </v-tooltip>
+            </v-tooltip>
+        </span>
     </template>
 
     <template v-slot:toolbar-extra>
@@ -130,12 +132,11 @@
         <template v-slot:item.tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
         </template>
-<!-- 
         <template v-slot:item.actions="{ item }">
-            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=AlphaFoldDB'" target="_blank">
-                <v-img :src="require('./assets/marv-foldseek-small.png')" max-width="16"></v-img>
+            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=BFVD_v2'" target="_blank">
+                <img src="./assets/marv-foldseek-small.png" style="display: inline-block; width: 16px; height: 16px;" />
             </v-chip>
-        </template> -->
+        </template>
     </v-data-table-server>
     </div>
     </template>
@@ -173,13 +174,19 @@ export default {
                     title: "Structure",
                     value: "structure",
                     sortable: false,
-                    width: "15%",
+                    width: "5%",
                 },
                 {
                     title: "Accession",
                     value: "accession",
                     sortable: false,
                     width: "30%",
+                },
+                {
+                    title: "pLDDT",
+                    value: "plddt",
+                    sortable: false,
+                    width: "5%",
                 },
                 // {
                 //     text: "Length",
@@ -196,20 +203,14 @@ export default {
                     title: "Taxonomy",
                     value: "tax_id",
                     sortable: false,
-                    width: "30%",
+                    width: "20%",
                 },
                 {
-                    title: "pLDDT",
-                    value: "plddt",
+                    text: 'Actions',
+                    value: 'actions',
                     sortable: false,
                     width: "10%",
                 },
-                // {
-                //     text: 'Actions',
-                //     value: 'actions',
-                //     sortable: false,
-                //     width: "10%",
-                // },
             ],
             members: [],
             totalMembers: 0,
@@ -287,14 +288,13 @@ export default {
 </script>
 
 <style scoped>
-/* Descriptions run far wider than the column, so they are clipped to one line
-   and shown in full on hover rather than wrapping and stretching every row. */
 .description {
-    max-width: 22em;
+    max-width: 40em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 
 /* A flex item will not shrink below its content unless min-width is set, so
    without this the table pushes the panel past the card and is clipped by its
