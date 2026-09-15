@@ -29,7 +29,7 @@
     
                 <template v-slot:item.accession="prop">
                     <ExternalLinks :accession="prop.value">
-                        <template v-slot:accession><router-link :to="{ name: 'cluster', params: { cluster: prop.value }}" target="_blank">{{ prop.value }}</router-link></template>
+                        <template v-slot:accession><router-link class="accession-link" :to="{ name: 'cluster', params: { cluster: prop.value }}" target="_blank">{{ prop.value }}</router-link></template>
                     </ExternalLinks><br>
                     {{ prop.item.description }}
                 </template>

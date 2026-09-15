@@ -38,7 +38,7 @@
         :items-per-page-options="[10, 20, 50, 100]"
     >
         <template v-slot:item.accession="prop">
-            <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}">{{ prop.value }}</router-link><br>
+            <router-link class="accession-link" :to="{ name: 'cluster', params: { cluster: prop.value }}">{{ prop.value }}</router-link><br>
             <div class="description" :title="prop.item.description">{{ prop.item.description }}</div>
         </template>
         <template v-slot:item.avg_len="prop">

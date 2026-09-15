@@ -16,6 +16,18 @@ export default {
 </script>
 
 <style>
+:root {
+    --BFVD_CLR: #30E940;
+}
+
+.v-theme--light {
+    --BFVD_LINK_CLR: rgb(var(--v-theme-primary));
+}
+
+.v-theme--dark {
+    --BFVD_LINK_CLR: var(--BFVD_CLR);
+}
+
 /* Vuetify 3 dropped Vuetify 2's anchor rule, so links fell back to browser defaults
    -- #0000EE, and #551A8B once visited. Restore one themed colour, visited included. */
 a {
@@ -36,5 +48,9 @@ a:hover {
 .v-list-item a,
 .v-chip a {
     color: inherit;
+}
+
+.accession-link {
+    color: var(--BFVD_LINK_CLR) !important;
 }
 </style>

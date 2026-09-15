@@ -6,7 +6,8 @@
         :disabled="inSearch"
         :loading="inSearch"
         size="x-large"
-        :color="this.error ? 'error' : 'primary'"
+        :color="this.error ? 'error' : undefined"
+        :class="{ 'bfvd-file-btn': !this.error }"
         accept=".pdb,.mmcif,.cif,.mcif,chemical/x-pdb,chemical/x-cif,chemical/x-mmcif"
         v-bind="$attrs"
     >
@@ -138,3 +139,10 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+.bfvd-file-btn {
+    background-color: var(--BFVD_CLR);
+    color: #000;
+}
+</style>

@@ -16,11 +16,14 @@
                             class="text-center pt-8"
                             cols="12"
                         >
-                            <h1 class="text-h4 font-weight-thin mb-4">
-                                BFVD
-                            </h1>
+                            <div class="brand-heading">
+                                <h1 class="text-h4 font-weight-bold mb-4">
+                                    BFVD
+                                </h1>
+                                    <span class="release-badge">v3</span>
+                            </div>
                             <h4 class="subheading">
-                                Completing the structural coverage of viral proteins in <a href="https://uniprot.org" target="_blank" rel="noopener">UniProt</a>
+                                Completing the structural coverage of viral proteins in <a href="https://uniprot.org" target="_blank" rel="noopener">UniProt</a> 2025_03
                             </h4>
                             
                             <br>
@@ -40,6 +43,7 @@
                             <v-tabs-window v-model="tab" style="padding: 1em;">
                                 <v-tabs-window-item>
                                     <v-text-field
+                                        class="bfvd-field"
                                         variant="outlined"
                                         label="UniProt accession"
                                         style="max-width: 400px; margin: 0 auto;"
@@ -284,6 +288,22 @@ export default {
     margin-bottom: 8px;
 }
 
+/* Brand-coloured search field, focused or not; the error state keeps Vuetify's red. */
+.bfvd-field >>> .v-field:not(.v-field--error) .v-field__outline {
+    color: var(--BFVD_CLR);
+    --v-field-border-opacity: 1;
+}
+
+.bfvd-field >>> .v-field:not(.v-field--error) .v-label {
+    color: var(--BFVD_CLR);
+    opacity: 1;
+}
+
+.bfvd-field >>> .v-input__control:has(.v-field:not(.v-field--error)) ~ .v-input__append .v-icon {
+    color: var(--BFVD_CLR);
+    opacity: 1;
+}
+
 code {
     font-size: 0.8em;
 }
@@ -306,8 +326,39 @@ code {
 
 .search-select >>> .v-tab {
     text-transform: none;
-    padding: 0 24px
+    padding: 0 24px;
+    font-weight: 700;
 }
+
+.search-select >>> .v-tab--selected {
+    background-color: color-mix(in srgb, var(--BFVD_CLR) 80%);
+}
+
+.brand-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.brand-heading h1 {
+    color: var(--BFVD_CLR);
+}
+
+.release-badge {
+    margin-bottom: 1rem;
+    padding: 4px 7px;
+    border: 1px solid var(--BFVD_CLR);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.45);
+    color: var(--BFVD_CLR);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
 .v-tabs-window {
     background-color: transparent !important;
 }

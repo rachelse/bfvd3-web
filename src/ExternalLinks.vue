@@ -22,7 +22,7 @@
             </v-list-item>
         </v-list>
     </v-menu> -->
-    <a :href="'https://www.uniprot.org/uniprotkb/' + accession" target="_blank" rel="noopener">{{ accession }}</a>
+    <a class="accession-link" :href="'https://www.uniprot.org/uniprotkb/' + accession" target="_blank" rel="noopener">{{ accession }}</a>
 </template>
 
 <script>

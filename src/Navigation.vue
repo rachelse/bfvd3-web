@@ -6,7 +6,7 @@
 
     <v-spacer></v-spacer>
     <v-toolbar-items class="hidden-sm-and-down">
-        <v-btn v-for="link in links" :key="link.title" variant="text" :href="link.href" rel="external noopener" target="_blank">{{ link.title }}</v-btn>
+        <v-btn v-for="link in links" :key="link.title" class="release-nav-link" variant="text" :href="link.href" rel="external noopener" target="_blank">{{ link.title }}</v-btn>
         <!-- <v-btn icon rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis">
             <v-icon>{{ $MDI.GitHub }}</v-icon>
         </v-btn> -->
@@ -23,7 +23,7 @@
         </template>
         <v-list>
           <v-list-item v-for="link in links" :key="link.title" rel="external noopener" target="_blank" :href="link.href">
-            <v-list-item-title>{{ link.title }}</v-list-item-title>
+            <v-list-item-title class="release-nav-link">{{ link.title }}</v-list-item-title>
           </v-list-item>
           <v-list-item rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis">
             <v-list-item-title>GitHub</v-list-item-title>
@@ -56,5 +56,9 @@ export default {
 <style>
 .v-app-bar-title__content {
   width: auto !important;
+}
+
+.release-nav-link {
+  color: var(--BFVD_CLR) !important;
 }
 </style>
