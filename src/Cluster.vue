@@ -1,7 +1,7 @@
 <template>
 
 <v-row style="margin:0em;">
-    <v-col cols="12" md="3" lg="8">
+    <v-col cols="12" md="7" lg="7">
     <panel fill-height>
         <template v-slot:header>
             Entry: {{ response ? response.accession : "Loading..." }}
@@ -95,7 +95,7 @@
                     pLDDT
                 </dt>
                 <dd>
-                    {{ response.plddt.toFixed(2) }}
+                    {{ formatNumber(response.plddt) }}
                 </dd>
                 </div>
                 <div>
@@ -190,7 +190,7 @@
                     Average length
                 </dt>
                 <dd>
-                    {{ response.avg_len.toFixed(2) }} aa
+                    {{ formatNumber(response.avg_len) }} aa
                 </dd>
                 </div>
                 <!-- <div>
@@ -229,7 +229,7 @@
         </template>
     </panel>
     </v-col>
-    <v-col cols="12" md="5" lg="4">
+    <v-col cols="12" md="5" lg="5">
     <Panel class="repr-structure" fill-height >
         <template v-slot:header>
             Structure
@@ -323,6 +323,13 @@ export default {
     methods: {
         log(value) {
             console.log(value);
+        },
+        formatNumber(value) {
+            if (value === null || value === undefined || value === '') {
+                return 'NA';
+            }
+            const number = Number(value);
+            return Number.isFinite(number) ? number.toFixed(2) : 'NA';
         },
         fetchData() {
             this.fetching = true;
