@@ -90,7 +90,7 @@
         </template>
 
         <template v-slot:item.actions="{ item }">
-            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=BFVD_v2'" target="_blank" rel="noopener">
+            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=BFVD_v3'" target="_blank" rel="noopener">
                 <img src="./assets/marv-foldseek-small.png" style="display: inline-block; width: 16px; height: 16px;" />
             </v-chip>
         </template>
