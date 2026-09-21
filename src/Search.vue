@@ -114,9 +114,9 @@
                     <v-card-title primary-title class="pt-0 mt-0">
                         
                         <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
-                            Kim&nbsp;R, Levy&nbsp;Karin&nbsp;E, Mirdita&nbsp;M, Steinegger&nbsp;M.
-                            <a href="https://academic.oup.com/nar/advance-article/doi/10.1093/nar/gkae1119/7906834" target="_blank" rel="noopener">BFVD - a large repository of predicted viral protein structures.</a>
-                            Nucleic Acids Research,&nbsp;gkae1119,&nbsp;2024.
+                            Kim&nbsp;RS, Pimenova&nbsp;O, Levy&nbsp;Karin&nbsp;E, Mirdita&nbsp;M, Steinegger&nbsp;M.
+                            <a href="https://www.biorxiv.org/content/10.64898/2026.09.16.752260v1" target="_blank" rel="noopener">BFVD v3&ndash;UniProt-complete, improved viral protein structure predictions.</a>
+                            bioRxiv,&nbsp;2026.09.16.752260,&nbsp;2026.
                         </p>
                     </v-card-title>
                     </v-col>

@@ -239,11 +239,9 @@ app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
             for (let j = 0; j < result.alignments[0].length; j++) {
                 const target = result.alignments[0][j].target;
                 
-                let accession = "";
-                try {
-                    // accession = target.match(/AF-(.*)-F\d+-model/)[1];
-                    accession = target.match(/([^_]+)_/)[1];
-                } catch (e) {
+                // BFVD v3 headers are "ACCESSION description..."; v2 were "ACCESSION_start-end"
+                let accession = target.split(/\s+/)[0].replace(/_\d+-\d+$/, '');
+                if (!accession) {
                     console.log("error retrieving accession: ", target);
                     accession = "error-retrieving-accession";
                 }

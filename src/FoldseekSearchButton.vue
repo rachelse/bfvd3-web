@@ -91,7 +91,7 @@ export default {
                 new Promise((resolve, reject) => {
                     this.$axios.post('https://search.foldseek.com/api/ticket', convertToQueryUrl({
                         q: extractAtomRecords(e.target.result),
-                        database: ["BFVD"],
+                        database: ["bfvd_v3"],
                         mode: "3diaa"
                     }), {
                         headers: {
