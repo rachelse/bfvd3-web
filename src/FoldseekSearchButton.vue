@@ -1,7 +1,7 @@
 <template>
     <div>
     <FileButton
-        label="Upload PDB File"
+        label="Upload PDB/mmCIF File"
         @upload="upload"
         :disabled="inSearch"
         :loading="inSearch"

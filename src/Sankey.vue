@@ -406,7 +406,7 @@ export default {
 								</div>
 								<hr style="margin: 8px 0; border: none; border-top: 1px solid #fff; opacity: 0.2;">
 								<div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem;">
-									<div style="font-weight: bold;">Clade Reads</div>
+									<div style="font-weight: bold;">Members</div>
 									<div style="margin-left: 10px;">${d.value}</div>
 								</div>
 							</div>

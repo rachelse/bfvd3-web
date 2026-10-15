@@ -6,15 +6,13 @@
         </template>
     
         <template v-slot:content>
-            <v-data-table
+            <v-data-table-server
                 :headers="headers"
                 :items="response"
                 v-model:page="options.page"
                 v-model:items-per-page="options.itemsPerPage"
-                :server-items-length="total"
-                :footer-props="{
-                    'items-per-page-options': [10, 20, 50, 100, -1],
-                }"
+                :items-length="total"
+                :items-per-page-options="[10, 20, 50, 100]"
             >
                 <template v-slot:item.structure="prop">
                     <div style="text-align: center;">
@@ -142,7 +140,7 @@
                     </v-menu>
                 </template>
     
-            </v-data-table>
+            </v-data-table-server>
         </template>
     </panel>
     </v-col>
@@ -171,7 +169,7 @@
         data() {
             return {
                 response: [],
-                total: null,
+                total: 0,
                 page: null,
                 headers: [
                     {

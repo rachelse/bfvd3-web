@@ -282,7 +282,7 @@ app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
     queries_where.push(`e.plddt >= ? AND e.plddt <= ?`);
     if (is_singleton != undefined) {
         queries_where.push(`c.is_singleton == ?`);
-        filter_params.push(is_singleton ? '1' : '0')
+        filter_params.push(is_singleton)
     }
 
     const accessions = results.map(r => r.accession);
@@ -615,7 +615,7 @@ app.get('/api/cluster/:cluster/members', async (req, res) => {
             res.setHeader('Content-Type', 'text/plain');
             res.charset = 'UTF-8';
             processAndWriteInChunks(result, 10000,
-                chunk => chunk.map(member => member.accession).join('\n'),
+                chunk => chunk.map(member => member.accession + '\n').join(''),
                 chunk => res.write(chunk));
             res.end();
             break;
@@ -752,7 +752,7 @@ app.get('/api/cluster/:cluster/similars', async (req, res) => {
             res.setHeader('Content-Type', 'text/plain');
             res.charset = 'UTF-8';
             processAndWriteInChunks(result, 10000,
-                chunk => chunk.map(similar => similar.accession).join('\n'),
+                chunk => chunk.map(similar => similar.accession + '\n').join(''),
                 chunk => res.write(chunk));
             res.end();
             break;

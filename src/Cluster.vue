@@ -236,7 +236,7 @@
         </template>
         
         <template v-slot:toolbar-extra>
-            <v-btn v-if="response" variant="plain" :href="'https://bfvd.steineggerlab.workers.dev/pdb/' + response.accession + '.pdb'">
+            <v-btn v-if="response" variant="plain" color="var(--BFVD_CLR)" :href="'https://bfvd.steineggerlab.workers.dev/pdb/' + response.accession + '.pdb'">
                 <v-icon class="mr-1">{{ $MDI.FileDownloadOutline }}</v-icon>
                 PDB
             </v-btn>

@@ -48,7 +48,7 @@
                 </span>
             </v-tooltip>
             <div class="toolbar-panel" v-if="toolbar">
-                <v-item-group class="v-btn-toggle" :theme="isFullscreen ? 'light' : undefined">
+                <v-item-group class="v-btn-toggle" :theme="isFullscreen ? ($vuetify.theme.current.dark ? 'dark' : 'light') : undefined">
                 <v-btn
                     v-if="secondComponent"
                     v-bind="tbButtonBindings"
