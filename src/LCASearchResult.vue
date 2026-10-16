@@ -56,7 +56,7 @@
                         :close-on-content-click="false"
                         offset-y>
                         <template v-slot:activator="{ props }">
-                            <v-btn v-bind="props" :variant="options.is_singleton != null ? 'outlined' : 'plain'">
+                            <v-btn v-bind="props" class="pe-1" :variant="options.is_singleton != null ? 'outlined' : 'plain'">
                                 {{ column.title }}
                             </v-btn>
                         </template>
@@ -69,6 +69,7 @@
                             </v-chip-group>
                         </v-card>
                     </v-menu>
+                    <v-icon size="small" v-tooltip:top="'BFVD sequences clustered with MMseqs2 (30% identity, 90% coverage)'">{{ $MDI.HelpCircleOutline }}</v-icon>
                 </template>
     
                 <template v-slot:item.is_singleton="prop">
