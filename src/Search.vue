@@ -337,22 +337,6 @@ export default {
     margin-bottom: 8px;
 }
 
-/* Brand-coloured search field, focused or not; the error state keeps Vuetify's red. */
-.bfvd-field >>> .v-field:not(.v-field--error) .v-field__outline {
-    color: var(--BFVD_CLR);
-    --v-field-border-opacity: 1;
-}
-
-.bfvd-field >>> .v-field:not(.v-field--error) .v-label {
-    color: var(--BFVD_CLR);
-    opacity: 1;
-}
-
-.bfvd-field >>> .v-input__control:has(.v-field:not(.v-field--error)) ~ .v-input__append .v-icon {
-    color: var(--BFVD_CLR);
-    opacity: 1;
-}
-
 code {
     font-size: 0.8em;
 }
