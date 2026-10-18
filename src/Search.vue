@@ -99,9 +99,9 @@
                                 <v-tabs-window-item>
                                     <TaxonomyNcbiSearch
                                         :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
+                                        :disabled="inSearch"
                                         @click:append="searchLCA"
                                         @update:model-value="searchLCA"
-                                        @keyup.enter="searchLCA"
                                         v-model="queryLCA"
                                     ></TaxonomyNcbiSearch>
                                     <v-radio-group 
@@ -296,8 +296,8 @@ export default {
                 name: "lca",
                 params: { taxid: this.queryLCA.value, type: this.lcaSearchType }
             })
-            .catch((error) => {
-                if (error && error.name == "NavigationDuplicated") {
+            .then((failure) => {
+                if (failure) {
                     this.inSearch = false;
                 }
             });
@@ -309,8 +309,8 @@ export default {
                 name: "foldseek",
                 params: { jobid: jobid }
             })
-            .catch((error) => {
-                if (error && error.name == "NavigationDuplicated") {
+            .then((failure) => {
+                if (failure) {
                     this.inSearch = false;
                 }
             });
