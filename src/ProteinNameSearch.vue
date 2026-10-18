@@ -1,35 +1,36 @@
 <template>
-    <v-combobox
+    <v-autocomplete
         class="bfvd-field"
         variant="outlined"
-        :model-value="modelValue"
         label="Protein name"
-        placeholder="Start typing a protein name"
-        hide-no-data
-        no-filter
-        :items="items"
+        style="max-width: 400px; margin: 0 auto;"
+        v-model:search="search"
+        :model-value="modelValue || null"
         item-title="name"
         item-value="name"
-        :return-object="false"
+        placeholder="Start typing a protein name"
+        hide-no-data
+        :items="items"
         :loading="isLoading"
-        v-model:search="search"
-        style="max-width: 400px; margin: 0 auto;"
-        @keydown.enter="submit(search)"
+        no-filter
+        auto-select-first
+        @update:model-value="pick"
+        @update:focused="focused = $event"
     >
         <template v-slot:item="{ item, props }">
             <v-list-item
                 v-bind="props"
                 :title="item.raw.name"
                 :subtitle="item.raw.n_entry.toLocaleString() + (item.raw.n_entry == 1 ? ' entry' : ' entries')"
-                @click="submit(item.raw.name)"
             ></v-list-item>
         </template>
-    </v-combobox>
+    </v-autocomplete>
 </template>
 
 <script>
 import { debounce } from './lib/debounce';
 
+// Only names from the suggestions can be picked, since the search matches whole names
 export default {
     props: ['modelValue'],
     emits: ['update:modelValue', 'search'],
@@ -37,26 +38,25 @@ export default {
         return {
             items: [],
             isLoading: false,
-            search: this.modelValue,
+            search: null,
+            focused: false,
         }
     },
     watch: {
-        modelValue(val) {
-            this.search = val;
-        },
         search(val) {
-            if (val !== this.modelValue) {
-                this.$emit('update:modelValue', val);
+            if (!val && this.focused && this.modelValue) {
+                this.$emit('update:modelValue', null);
             }
-            if (val && val.trim().length > 2) {
+            if (val && val.trim().length > 2 && val !== this.modelValue) {
                 this.querySelections(val);
-            } else {
-                this.items = [];
             }
         },
     },
     methods: {
-        submit(name) {
+        pick(name) {
+            if (!name) {
+                return;
+            }
             this.$emit('update:modelValue', name);
             this.$emit('search');
         },
