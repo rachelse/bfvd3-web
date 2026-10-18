@@ -86,7 +86,7 @@ function getDescription(accession) {
 // them for the members panel. Nothing is a "representative", hence no rep_* names.
 const ENTRY_COLS = `
     e.accession, e.len, e.plddt, e.tax_id, e.flag, e.cluster_id,
-    e.proteome,
+    e.proteome, e.is_reference,
     c.n_mem, c.avg_len, c.avg_plddt, c.is_singleton, c.lca_tax_id`;
 
 const ENTRY_FROM = `FROM entry AS e JOIN cluster AS c ON e.cluster_id = c.cluster_id`;
@@ -113,6 +113,10 @@ function tableFilters(query) {
     if (query.is_singleton != undefined) {
         where.push(`c.is_singleton == ?`);
         params.push(query.is_singleton);
+    }
+    if (query.is_reference != undefined) {
+        where.push(`e.is_reference == ?`);
+        params.push(query.is_reference);
     }
     return { where, params };
 }

@@ -14,7 +14,8 @@ CREATE TABLE entry (
     cluster_id TEXT,              -- -> cluster.cluster_id
     -- UniProt proteome. Where an entry lists several, a reference proteome is preferred,
     -- else the first listed. 'NA' for the 3.2M entries UniProt assigns to none.
-    proteome   TEXT
+    proteome   TEXT,
+    is_reference INTEGER          -- 1 if proteome is a UniProt reference proteome
 );
 
 CREATE TABLE cluster (

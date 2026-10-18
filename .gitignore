@@ -30,6 +30,8 @@ data/afdb_desc.index
 data/afdb_plddt
 data/afdb_plddt.index
 
+data-bfvd2/*
+
 
 
 # Claude Code personal settings (machine-local, not team policy)
