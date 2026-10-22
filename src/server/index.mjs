@@ -33,6 +33,11 @@ const sql = await open({
     driver: sqlite3.Database,
     mode: sqlite3.OPEN_READONLY,
 })
+
+const hasNameSearch = (await sql.get(`SELECT 1 FROM pragma_table_info('protein_name') WHERE name = 'n_entry'`)) != null;
+if (!hasNameSearch) {
+    console.log('No protein_name table found; protein name search is disabled.');
+}
 console.timeLog();
 
 console.log('Loading Databases...')
@@ -81,10 +86,40 @@ function getDescription(accession) {
 // them for the members panel. Nothing is a "representative", hence no rep_* names.
 const ENTRY_COLS = `
     e.accession, e.len, e.plddt, e.tax_id, e.flag, e.cluster_id,
-    e.proteome,
+    e.proteome, e.is_reference,
     c.n_mem, c.avg_len, c.avg_plddt, c.is_singleton, c.lca_tax_id`;
 
 const ENTRY_FROM = `FROM entry AS e JOIN cluster AS c ON e.cluster_id = c.cluster_id`;
+
+// Table filters as SQL clauses; unset ranges arrive as "0," and are skipped
+function tableFilters(query) {
+    const where = [];
+    const params = [];
+    const ranges = {
+        avg_length_range: 'c.avg_len', avg_plddt_range: 'c.avg_plddt', n_mem_range: 'c.n_mem',
+        length_range: 'e.len', plddt_range: 'e.plddt',
+    };
+    for (const [param, column] of Object.entries(ranges)) {
+        const [min, max] = String(query[param] ?? '').split(',').map(parseFloat);
+        if (min > 0) {
+            where.push(`${column} >= ?`);
+            params.push(min);
+        }
+        if (Number.isFinite(max)) {
+            where.push(`${column} <= ?`);
+            params.push(max);
+        }
+    }
+    if (query.is_singleton != undefined) {
+        where.push(`c.is_singleton == ?`);
+        params.push(query.is_singleton);
+    }
+    if (query.is_reference != undefined) {
+        where.push(`e.is_reference == ?`);
+        params.push(query.is_reference);
+    }
+    return { where, params };
+}
 
 const app = express();
 app.use(cors());
@@ -178,40 +213,16 @@ app.get('/api/search/lca/:taxonomy?', async (req, res) => {
     const taxid = req.query.taxid;
     const lca_search_type = req.query.type;
 
-    const is_singleton = req.query.is_singleton;
-    let filter_params = [];
-    for (let i of ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'length_range', 'plddt_range']) {
-        if (typeof(req.query[i]) == "undefined") {
-            filter_params.push('0');
-            filter_params.push('INF');
-        } else {
-            const split = req.query[i].split(',');
-            filter_params.push(split[0] ?? '0');
-            filter_params.push(split[1] ?? 'INF');
-        }
-    }
-
-    let queries_where = [];
-    if (lca_search_type === 'exact') {
-        queries_where.push("c.lca_tax_id = ?")
-    } else {
-        queries_where.push("c.lca_tax_id in (SELECT child FROM taxonomy_lineage as tl WHERE tl.parent = ?)");
-    }
-    queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
-    queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
-    queries_where.push(`c.n_mem >= ? AND c.n_mem <= ?`);
-    queries_where.push(`e.len >= ? AND e.len <= ?`);
-    queries_where.push(`e.plddt >= ? AND e.plddt <= ?`);
-    if (is_singleton != undefined) {
-        queries_where.push(`c.is_singleton == ?`);
-        filter_params.push(is_singleton)
-    }
+    const filters = tableFilters(req.query);
+    const lcaClause = lca_search_type === 'exact'
+        ? "c.lca_tax_id = ?"
+        : "c.lca_tax_id in (SELECT child FROM taxonomy_lineage as tl WHERE tl.parent = ?)";
 
     let result = await sql.all(`
     SELECT DISTINCT ${ENTRY_COLS}
         ${ENTRY_FROM}
-        WHERE ${queries_where.join(" AND ")}
-    `, taxid, ...filter_params);
+        WHERE ${[lcaClause, ...filters.where].join(" AND ")}
+    `, taxid, ...filters.params);
 
     return finalizeResult(result, req, res);
 });
@@ -261,39 +272,94 @@ app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
         fileCache.add(jobid, JSON.stringify(results));
     }
 
-    const is_singleton = req.query.is_singleton;
-    let filter_params = [];
-    for (let i of ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'length_range', 'plddt_range']) {
-        if (typeof(req.query[i]) == "undefined") {
-            filter_params.push('0');
-            filter_params.push('INF');
-        } else {
-            const split = req.query[i].split(',');
-            filter_params.push(split[0] ?? '0');
-            filter_params.push(split[1] ?? 'INF');
-        }
-    }
-
-    let queries_where = [];
-    queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
-    queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
-    queries_where.push(`c.n_mem >= ? AND c.n_mem <= ?`);
-    queries_where.push(`e.len >= ? AND e.len <= ?`);
-    queries_where.push(`e.plddt >= ? AND e.plddt <= ?`);
-    if (is_singleton != undefined) {
-        queries_where.push(`c.is_singleton == ?`);
-        filter_params.push(is_singleton)
-    }
-
+    const filters = tableFilters(req.query);
     const accessions = results.map(r => r.accession);
     let result = await sql.all(`
         SELECT DISTINCT ${ENTRY_COLS}
             ${ENTRY_FROM}
-            WHERE e.accession IN (${accessions.map(() => '?').join(',')})
-              AND ${queries_where.join(" AND ")}
-            `, ...accessions, ...filter_params);
+            WHERE ${[`e.accession IN (${accessions.map(() => '?').join(',')})`, ...filters.where].join(" AND ")}
+            `, ...accessions, ...filters.params);
 
     return finalizeResult(result, req, res);
+});
+
+// Words in order, each matched as a substring. Only letters and digits are kept,
+// so input cannot carry LIKE wildcards.
+function nameLikePattern(text) {
+    const words = String(text ?? '').match(/[\p{L}\p{N}]+/gu) || [];
+    return words.length == 0 ? null : '%' + words.join('%') + '%';
+}
+
+// Autocomplete: prefix matches first, then the most common names.
+app.get('/api/search/name-suggest', async (req, res) => {
+    if (!hasNameSearch) {
+        res.send([]);
+        return;
+    }
+    const pattern = nameLikePattern(req.query.q);
+    if (pattern == null) {
+        res.send([]);
+        return;
+    }
+    const result = await sql.all(`
+        SELECT name, n_entry FROM protein_name
+            WHERE name LIKE ?
+            ORDER BY name LIKE ? DESC, n_entry DESC
+            LIMIT 10
+        `, pattern, pattern.slice(1));
+    res.send(result);
+});
+
+app.get('/api/search/name/:taxonomy?', async (req, res) => {
+    if (!hasNameSearch) {
+        res.status(503).send({ error: "Protein name search is not available" });
+        return;
+    }
+    const name = String(req.query.q ?? '').trim();
+    if (!name) {
+        res.status(400).send({ error: "Empty query" });
+        return;
+    }
+
+    // Only the whole name matches, so counts agree with the autocomplete
+    const filters = tableFilters(req.query);
+    const where = ['p.name = ?', ...filters.where];
+    const params = [name, ...filters.params];
+    if (req.query.tax_id != undefined) {
+        where.push(`c.lca_tax_id IN (SELECT child FROM taxonomy_lineage AS tl WHERE tl.parent = ?)`);
+        params.push(req.query.tax_id);
+    }
+    const from = `
+        FROM protein_name AS p
+        JOIN entry_name AS en ON en.name_id = p.name_id
+        JOIN entry AS e ON e.accession = en.accession
+        JOIN cluster AS c ON e.cluster_id = c.cluster_id
+        WHERE ${where.join(' AND ')}`;
+
+    // LCA column autocomplete
+    if (typeof(req.params.taxonomy) != "undefined") {
+        const lcas = await sql.all(`SELECT DISTINCT c.lca_tax_id ${from}`, ...params);
+        return finalizeResult(lcas, req, res);
+    }
+
+    // Page in SQL, not finalizeResult: one name can have 233k entries
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const itemsPerPage = Math.min(100, Math.max(1, parseInt(req.query.itemsPerPage) || 10));
+    const { total } = await sql.get(`SELECT COUNT(*) AS total ${from}`, ...params);
+    let result = await sql.all(`
+        SELECT ${ENTRY_COLS}
+            ${from}
+            ORDER BY en.accession
+            LIMIT ? OFFSET ?
+        `, ...params, itemsPerPage, (page - 1) * itemsPerPage);
+
+    result.forEach((x) => {
+        x.description = getDescription(x.accession);
+        if (x.lca_tax_id) {
+            x.lca_tax_id = tree.nodeExists(x.lca_tax_id) ? tree.getNode(x.lca_tax_id) : null;
+        }
+    });
+    res.send({ total: total, result: result });
 });
 
 app.get('/api/:query', async (req, res) => {

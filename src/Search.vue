@@ -36,6 +36,7 @@
                                 background-color="transparent"
                             >
                                 <v-tab>UniProt</v-tab>
+                                <v-tab>Protein name</v-tab>
                                 <!-- <v-tab>Gene Ontology</v-tab> -->
                                 <v-tab>Taxonomy</v-tab>
                                 <v-tab>Structure</v-tab>
@@ -74,11 +75,33 @@
                                     </v-chip-group>
                                 </v-tabs-window-item>
                                 <v-tabs-window-item>
+                                    <ProteinNameSearch
+                                        v-model="queryName"
+                                        :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
+                                        :disabled="inSearch"
+                                        @click:append="searchName()"
+                                        @search="searchName()"
+                                    ></ProteinNameSearch>
+
+                                    <h2 class="text-h6 mb-2 mt-4">
+                                        Examples
+                                    </h2>
+                                    <v-chip-group
+                                        column
+                                        style="max-width: 400px; margin: 0 auto; "
+                                    >
+                                        <v-chip v-for="item in nameExamples" :key="item"
+                                            variant="outlined" v-on:click="queryName = item; searchName()" >
+                                            {{ item }}
+                                        </v-chip>
+                                    </v-chip-group>
+                                </v-tabs-window-item>
+                                <v-tabs-window-item>
                                     <TaxonomyNcbiSearch
                                         :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
+                                        :disabled="inSearch"
                                         @click:append="searchLCA"
                                         @update:model-value="searchLCA"
-                                        @keyup.enter="searchLCA"
                                         v-model="queryLCA"
                                     ></TaxonomyNcbiSearch>
                                     <v-radio-group 
@@ -103,8 +126,9 @@
             </v-col>
             <!-- <LCASearchResult v-else-if="tab == 2" @total="small = $event > 0; inSearch = false;"></LCASearchResult> -->
             <!-- <FoldseekSearchResult v-else-if="tab == 3" @total="small = $event > 0; inSearch = false;"></FoldseekSearchResult> -->
-            <LCASearchResult v-if="tab == 1" @total="small = $event > 0; inSearch = false;"></LCASearchResult>
-            <FoldseekSearchResult v-else-if="tab == 2" @total="small = $event > 0; inSearch = false;"></FoldseekSearchResult>
+            <NameSearchResult v-if="tab == 1" @total="small = $event > 0; inSearch = false;"></NameSearchResult>
+            <LCASearchResult v-else-if="tab == 2" @total="small = $event > 0; inSearch = false;"></LCASearchResult>
+            <FoldseekSearchResult v-else-if="tab == 3" @total="small = $event > 0; inSearch = false;"></FoldseekSearchResult>
             <v-col>
                 <v-card rounded="0">
                     <v-col>
@@ -149,14 +173,18 @@ import Panel from "./Panel.vue";
 import FoldseekSearchButton from "./FoldseekSearchButton.vue";
 import TaxonomyNcbiSearch from "./TaxonomyNcbiSearch.vue";
 import LCASearchResult from "./LCASearchResult.vue";
+import NameSearchResult from "./NameSearchResult.vue";
+import ProteinNameSearch from "./ProteinNameSearch.vue";
 import FoldseekSearchResult from "./FoldseekSearchResult.vue";
 
 export default {
     name: "search",
-    components: { 
+    components: {
         Panel,
         TaxonomyNcbiSearch,
         LCASearchResult,
+        NameSearchResult,
+        ProteinNameSearch,
         FoldseekSearchButton,
         FoldseekSearchResult,
     },
@@ -170,6 +198,8 @@ export default {
                 {id:'P21405', desc:'Replicase polyprotein P2AB'},
                 {id:'A0A0R5U5Y9', desc:'Hemagglutinin'},
             ],
+            queryName: "Genome polyprotein",
+            nameExamples: ['Genome polyprotein', 'Envelope glycoprotein', 'Gag protein', 'RNA-directed RNA polymerase'],
             queryLCA: { text: "Tobacco mosaic virus", value: "12242", common_name: "Tobacco mosaic virus" },
             lcaSearchType: "lower",
             inSearch: false,
@@ -197,7 +227,8 @@ export default {
     },
     watch : {
         '$route': function(to, from) {
-            if (from.path != to.path) {
+            // fullPath: name searches differ only in their ?q=
+            if (from.fullPath != to.fullPath) {
                 this.setTab();
             }
         }
@@ -207,14 +238,15 @@ export default {
             console.log(value);
         },
         setTab() {
-            if (this.$route.params.taxid) {
-                // this.tab = 2;
+            if (this.$route.name == "name") {
                 this.tab = 1;
+                this.queryName = this.$route.query.q || "";
+            } else if (this.$route.params.taxid) {
+                this.tab = 2;
                 this.queryLCA = {text: "" + this.$route.params.taxid, value: this.$route.params.taxid};
                 this.lcaSearchType = this.$route.params.type;
             } else if (this.$route.params.jobid) {
-                // this.tab = 3;
-                this.tab = 2;
+                this.tab = 3;
             } else {
                 this.tab = 0;
             }
@@ -237,6 +269,23 @@ export default {
                     this.inSearch = false;
                 });
         },
+        searchName() {
+            const query = (this.queryName || "").trim();
+            if (!query) {
+                return;
+            }
+            this.inSearch = true;
+            this.error = null;
+            this.$router.push({
+                name: "name",
+                query: { q: query },
+            })
+            .then((failure) => {
+                if (failure) {
+                    this.inSearch = false;
+                }
+            });
+        },
         searchLCA() {
             if (!this.queryLCA) {
                 return;
@@ -247,8 +296,8 @@ export default {
                 name: "lca",
                 params: { taxid: this.queryLCA.value, type: this.lcaSearchType }
             })
-            .catch((error) => {
-                if (error && error.name == "NavigationDuplicated") {
+            .then((failure) => {
+                if (failure) {
                     this.inSearch = false;
                 }
             });
@@ -260,8 +309,8 @@ export default {
                 name: "foldseek",
                 params: { jobid: jobid }
             })
-            .catch((error) => {
-                if (error && error.name == "NavigationDuplicated") {
+            .then((failure) => {
+                if (failure) {
                     this.inSearch = false;
                 }
             });
@@ -286,22 +335,6 @@ export default {
     margin-top: 0px;
     padding-top: 0px;
     margin-bottom: 8px;
-}
-
-/* Brand-coloured search field, focused or not; the error state keeps Vuetify's red. */
-.bfvd-field >>> .v-field:not(.v-field--error) .v-field__outline {
-    color: var(--BFVD_CLR);
-    --v-field-border-opacity: 1;
-}
-
-.bfvd-field >>> .v-field:not(.v-field--error) .v-label {
-    color: var(--BFVD_CLR);
-    opacity: 1;
-}
-
-.bfvd-field >>> .v-input__control:has(.v-field:not(.v-field--error)) ~ .v-input__append .v-icon {
-    color: var(--BFVD_CLR);
-    opacity: 1;
 }
 
 code {

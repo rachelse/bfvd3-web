@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build the five import TSVs for the BFVD v2 webserver database.
 #
-#   entry.tsv                    accession, len, plddt, tax_id, flag, cluster_id, proteome
+#   entry.tsv                    accession, len, plddt, tax_id, flag, cluster_id, proteome, is_reference
 #   cluster.tsv                  cluster_id, n_mem, avg_len, avg_plddt, is_singleton, lca_tax_id
 #   ictv.tsv                     tax_id, ictv_id, ictv_host, mapping_step
 #   taxonomy-accession_host.tsv  accession, tax_id
@@ -81,7 +81,7 @@ gawk -F'\t' '
         if (!(a in tx))  { m_tx++;  tx[a]  = 0 }
         if (a in prot) n_prot++; else m_prot++
         print a "\t" len[a] "\t" pl[a] "\t" tx[a] "\t" (a in fl ? fl[a] : 1) "\t" c \
-              "\t" (a in prot ? prot[a] : "NA")
+              "\t" (a in prot ? prot[a] : "NA") "\t" (a in prot && prot[a] in refprot ? 1 : 0)
         n++
     }
     END {

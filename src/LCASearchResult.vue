@@ -29,10 +29,6 @@
                     {{ prop.item.description }}
                 </template>
     
-                <template v-slot:item.avg_plddt="prop">
-                    {{ prop.value.toFixed(2) }}
-                </template>
-    
     
                 <template v-slot:item.plddt="prop">
                     {{ prop.value.toFixed(2) }}
@@ -56,7 +52,7 @@
                         :close-on-content-click="false"
                         offset-y>
                         <template v-slot:activator="{ props }">
-                            <v-btn v-bind="props" :variant="options.is_singleton != null ? 'outlined' : 'plain'">
+                            <v-btn v-bind="props" class="px-1" :variant="options.is_singleton != null ? 'text' : 'plain'">
                                 {{ column.title }}
                             </v-btn>
                         </template>
@@ -69,10 +65,36 @@
                             </v-chip-group>
                         </v-card>
                     </v-menu>
+                    <v-icon size="small" v-tooltip:top="'BFVD sequences clustered with MMseqs2 (30% identity, 90% coverage)'">{{ $MDI.HelpCircleOutline }}</v-icon>
                 </template>
     
                 <template v-slot:item.is_singleton="prop">
                     <IsSingleton :isSingleton="prop.value"></IsSingleton>
+                </template>
+
+                <template v-slot:header.is_reference="{ column }">
+                    <v-menu
+                        :close-on-content-click="false"
+                        offset-y>
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" class="px-1" :variant="options.is_reference != null ? 'text' : 'plain'">
+                                {{ column.title }}
+                            </v-btn>
+                        </template>
+
+                        <v-card style="padding: 2em; width: 250px;">
+                            <h3>Filter by</h3>
+                            <v-chip-group column v-model="options.is_reference">
+                                <IsSingleton isReference="0"></IsSingleton>
+                                <IsSingleton isReference="1"></IsSingleton>
+                            </v-chip-group>
+                        </v-card>
+                    </v-menu>
+                    <v-icon size="small" v-tooltip:top="'Entry belongs to a UniProt reference proteome'">{{ $MDI.HelpCircleOutline }}</v-icon>
+                </template>
+
+                <template v-slot:item.is_reference="prop">
+                    <IsSingleton :isReference="prop.value"></IsSingleton>
                 </template>
     
                 <template v-slot:header.avg_len="{ column }">
@@ -80,24 +102,11 @@
                         :close-on-content-click="false"
                         offset-y>
                         <template v-slot:activator="{ props }">
-                            <v-btn v-bind="props" variant="plain">
+                            <v-btn v-bind="props" class="px-0" variant="plain">
                                 {{ column.title }}
                             </v-btn>
                         </template>
                         <RangeSlider :range="options.avg_length_range"></RangeSlider>
-                    </v-menu>
-                </template>
-    
-                <template v-slot:header.avg_plddt="{ column }">
-                    <v-menu
-                        :close-on-content-click="false"
-                        offset-y>
-                        <template v-slot:activator="{ props }">
-                            <v-btn v-bind="props" variant="plain">
-                                {{ column.title }}
-                            </v-btn>
-                        </template>
-                        <RangeSlider :range="options.avg_plddt_range"></RangeSlider>
                     </v-menu>
                 </template>
     
@@ -106,7 +115,7 @@
                         :close-on-content-click="false"
                         offset-y>
                         <template v-slot:activator="{ props }">
-                            <v-btn v-bind="props" variant="plain">
+                            <v-btn v-bind="props" class="px-0" variant="plain">
                                 {{ column.title }}
                             </v-btn>
                         </template>
@@ -119,7 +128,7 @@
                         :close-on-content-click="false"
                         offset-y>
                         <template v-slot:activator="{ props }">
-                            <v-btn v-bind="props" variant="plain">
+                            <v-btn v-bind="props" class="px-0" variant="plain">
                                 {{ column.title }}
                             </v-btn>
                         </template>
@@ -132,7 +141,7 @@
                         :close-on-content-click="false"
                         offset-y>
                         <template v-slot:activator="{ props }">
-                            <v-btn v-bind="props" variant="plain">
+                            <v-btn v-bind="props" class="px-0" variant="plain">
                                 {{ column.title }}
                             </v-btn>
                         </template>
@@ -182,6 +191,7 @@
                         title: "Accession",
                         value: "accession",
                         sortable: false,
+                        width: "15%",
                     },
                     // {
                     //     text: "LCA rank",
@@ -191,11 +201,39 @@
                         title: "LCA",
                         value: "lca_tax_id",
                         sortable: false,
+                        width: "10%",
+                    },
+                    {
+                        title: "Ref. proteome",
+                        value: "is_reference",
+                        sortable: false,
+                        // nowrap: true,
+                        width: "10%",
+                    },
+                    {
+                        title: "Singleton",
+                        value: "is_singleton",
+                        sortable: false,
+                        // nowrap: true,
+                        width: "10%",
+                    },
+                    {
+                        title: "pLDDT",
+                        value: "plddt",
+                        sortable: false,
+                        width: "3%",
+                    },
+                    {
+                        title: "Length",
+                        value: "len",
+                        sortable: false,
+                        width: "3%",
                     },
                     {
                         title: "Avg. length",
                         value: "avg_len",
                         sortable: false,
+                        width: "3%",
                     },
                     // {
                     //     text: "Avg. pLDDT",
@@ -206,21 +244,7 @@
                         title: "Members",
                         value: "n_mem",
                         sortable: false,
-                    },
-                    {
-                        title: "Singleton",
-                        value: "is_singleton",
-                        sortable: false,
-                    },
-                    {
-                        title: "pLDDT",
-                        value: "plddt",
-                        sortable: false,
-                    },
-                    {
-                        title: "Length",
-                        value: "len",
-                        sortable: false,
+                        width: "3%",
                     },
                 ],
                 options: {
@@ -233,6 +257,7 @@
                     n_mem_range: [0, Infinity],
                     tax_id: null,
                     is_singleton: null,
+                    is_reference: null,
                 },
                 taxAutocompleteDisabled: false,
                 range: [5, 5],
@@ -269,6 +294,9 @@
                 }
                 if (copy.is_singleton == null) {
                     delete copy.is_singleton;
+                }
+                if (copy.is_reference == null) {
+                    delete copy.is_reference;
                 }
                 const params = new URLSearchParams(copy);
                 params.sort();

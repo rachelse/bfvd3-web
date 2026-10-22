@@ -6,11 +6,15 @@
 
 <script>
 
+// Yes/no chip for the Singleton column, or the Reference proteome column when isReference is set
 export default {
     name: "IsSingleton",
-    props: ["isSingleton"],
+    props: ["isSingleton", "isReference"],
     computed: {
         chipText() {
+            if (this.isReference != null) {
+                return this.isReference == 1 ? "Reference" : "Non-reference";
+            }
             if (this.isSingleton == 0) {
                 return "Non-singleton";
             } else if (this.isSingleton == 1) {
@@ -18,10 +22,13 @@ export default {
             }
         },
         chipColor() {
+            if (this.isReference != null) {
+                return this.isReference == 1 ? "#7CB987" : "#9E9E9E";
+            }
             if (this.isSingleton == 0) {
-                return "#8FB5D6";
+                return "#7CB987";
             } else if (this.isSingleton == 1) {
-                return "#FFC8C1";
+                return "#9E9E9E";
             }
         }
     }

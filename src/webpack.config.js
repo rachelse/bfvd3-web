@@ -142,6 +142,12 @@ module.exports = (env, argv) => {
     if (!isProduction) {
         exports.devServer = {
             historyApiFallback: true,
+            client: {
+                overlay: {
+                    // benign browser warning when a Vuetify menu resizes while open
+                    runtimeErrors: (error) => !error.message.includes('ResizeObserver loop'),
+                },
+            },
             proxy: {
                 '/api': {
                     target: 'http://localhost:3000'

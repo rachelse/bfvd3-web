@@ -100,7 +100,7 @@
                 </div>
                 <div>
                 <dt>
-                    Singleton cluster
+                    Singleton cluster <v-icon size="small" v-tooltip:top="'BFVD sequences clustered with MMseqs2 (30% identity, 90% coverage)'">{{ $MDI.HelpCircleOutline }}</v-icon>
                 </dt>
                 <dd>
                     {{ response.is_singleton ? 'yes' : 'no' }}

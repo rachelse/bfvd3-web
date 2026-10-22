@@ -1,0 +1,326 @@
+<template>
+    <v-col cols="12">
+    <panel class="query-panel d-flex fill-height" fill-height>
+        <template v-slot:header>
+            Entry selection
+        </template>
+    
+        <template v-slot:content>
+            <v-data-table-server
+                :headers="headers"
+                :items="response"
+                v-model:page="options.page"
+                v-model:items-per-page="options.itemsPerPage"
+                :items-length="total"
+                :items-per-page-options="[10, 20, 50, 100]"
+            >
+                <template v-slot:item.structure="prop">
+                    <div style="text-align: center;">
+                        <router-link :to="{ name: 'cluster', params: { cluster: prop.item.accession }}" target='_blank'>
+                            <StructureThumb :accession="prop.item.accession"></StructureThumb>
+                        </router-link>
+                    </div>
+                </template>
+    
+                <template v-slot:item.accession="prop">
+                    <ExternalLinks :accession="prop.value">
+                        <template v-slot:accession><router-link class="accession-link" :to="{ name: 'cluster', params: { cluster: prop.value }}" target="_blank">{{ prop.value }}</router-link></template>
+                    </ExternalLinks><br>
+                    {{ prop.item.description }}
+                </template>
+    
+    
+                <template v-slot:item.plddt="prop">
+                    {{ prop.value.toFixed(2) }}
+                </template>
+    
+                <template v-slot:header.lca_tax_id="{ column }">
+                    <TaxonomyAutocomplete
+                        v-model="options.tax_id"
+                        :urlFunction="(_, b) => '/search/name/' + b"
+                        :disabled="taxAutocompleteDisabled"
+                        :options="requestOptions"
+                    ></TaxonomyAutocomplete>
+                </template>
+    
+                <template v-slot:item.lca_tax_id="prop">
+                    <TaxSpan :taxonomy="prop.value"></TaxSpan>
+                </template>
+    
+                <template v-slot:header.is_singleton="{ column }">
+                    <v-menu
+                        :close-on-content-click="false" >
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" class="px-1" :variant="options.is_singleton != null ? 'text' : 'plain'">
+                                {{ column.title }}
+                            </v-btn>
+                        </template>
+    
+                        <v-card style="padding: 2em; width: 200px;">
+                            <h3>Filter by</h3>
+                            <v-chip-group column v-model="options.is_singleton">
+                                <IsSingleton isSingleton="0"></IsSingleton>
+                                <IsSingleton isSingleton="1"></IsSingleton>
+                            </v-chip-group>
+                        </v-card>
+                    </v-menu>
+                    <v-icon size="small" v-tooltip:top="'BFVD sequences clustered with MMseqs2 (30% identity, 90% coverage)'">{{ $MDI.HelpCircleOutline }}</v-icon>
+                </template>
+    
+                <template v-slot:item.is_singleton="prop">
+                    <IsSingleton :isSingleton="prop.value"></IsSingleton>
+                </template>
+
+                <template v-slot:header.is_reference="{ column }">
+                    <v-menu
+                        :close-on-content-click="false">
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" class="px-1" :variant="options.is_reference != null ? 'text' : 'plain'">
+                                {{ column.title }}
+                            </v-btn>
+                        </template>
+
+                        <v-card style="padding: 2em; width: 200px;">
+                            <h3>Filter by</h3>
+                            <v-chip-group column v-model="options.is_reference">
+                                <IsSingleton isReference="0"></IsSingleton>
+                                <IsSingleton isReference="1"></IsSingleton>
+                            </v-chip-group>
+                        </v-card>
+                    </v-menu>
+                    <v-icon size="small" v-tooltip:top="'Entry belongs to a UniProt reference proteome'">{{ $MDI.HelpCircleOutline }}</v-icon>
+                </template>
+
+                <template v-slot:item.is_reference="prop">
+                    <IsSingleton :isReference="prop.value"></IsSingleton>
+                </template>
+    
+                <template v-slot:header.avg_len="{ column }">
+                    <v-menu
+                        :close-on-content-click="false"
+                        offset-y>
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" class="px-0" variant="plain">
+                                {{ column.title }}
+                            </v-btn>
+                        </template>
+                        <RangeSlider :range="options.avg_length_range"></RangeSlider>
+                    </v-menu>
+                </template>
+    
+                <template v-slot:header.n_mem="{ column }">
+                    <v-menu
+                        :close-on-content-click="false"
+                        offset-y>
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" class="px-0" variant="plain">
+                                {{ column.title }}
+                            </v-btn>
+                        </template>
+                        <RangeSlider :range="options.n_mem_range"></RangeSlider>
+                    </v-menu>
+                </template>
+    
+                <template v-slot:header.len="{ column }">
+                    <v-menu
+                        :close-on-content-click="false"
+                        offset-y>
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" class="px-0" variant="plain">
+                                {{ column.title }}
+                            </v-btn>
+                        </template>
+                        <RangeSlider :range="options.length_range"></RangeSlider>
+                    </v-menu>
+                </template>
+    
+                <template v-slot:header.plddt="{ column }">
+                    <v-menu
+                        :close-on-content-click="false"
+                        offset-y>
+                        <template v-slot:activator="{ props }">
+                            <v-btn v-bind="props" class="px-0" variant="plain">
+                                {{ column.title }}
+                            </v-btn>
+                        </template>
+                        <RangeSlider :range="options.plddt_range"></RangeSlider>
+                    </v-menu>
+                </template>
+    
+            </v-data-table-server>
+        </template>
+    </panel>
+    </v-col>
+    </template>
+    
+    <script>
+    import Panel from "./Panel.vue";
+    import TaxSpan from "./TaxSpan.vue";
+    import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
+    import IsSingleton from './IsSingleton.vue';
+    import RangeSlider from './RangeSlider.vue';
+    import ExternalLinks from "./ExternalLinks.vue";
+    import StructureThumb from "./StructureThumb.vue";
+    
+    export default {
+        name: "namesearchresult",
+        components: {
+            Panel,
+            StructureThumb,
+            TaxSpan,
+            TaxonomyAutocomplete,
+            IsSingleton,
+            RangeSlider,
+            ExternalLinks
+        },
+        data() {
+            return {
+                response: [],
+                total: 0,
+                page: null,
+                headers: [
+                    {
+                        title: "Structure",
+                        value: "structure",
+                        sortable: false,
+                        width: "10%",
+                    },
+                    {
+                        title: "Accession",
+                        value: "accession",
+                        sortable: false,
+                        width: "15%",
+                    },
+                    // {
+                    //     text: "LCA rank",
+                    //     value: "lca_tax_id.rank"
+                    // },
+                    {
+                        title: "LCA",
+                        value: "lca_tax_id",
+                        sortable: false,
+                        width: "10%",
+                    },
+                    {
+                        title: "Ref. proteome",
+                        value: "is_reference",
+                        sortable: false,
+                        // nowrap: true,
+                        width: "10%",
+                    },
+                    {
+                        title: "Singleton",
+                        value: "is_singleton",
+                        sortable: false,
+                        // nowrap: true,
+                        width: "10%",
+                    },
+                    {
+                        title: "pLDDT",
+                        value: "plddt",
+                        sortable: false,
+                        width: "3%",
+                    },
+                    {
+                        title: "Length",
+                        value: "len",
+                        sortable: false,
+                        width: "3%",
+                    },
+                    {
+                        title: "Avg. length",
+                        value: "avg_len",
+                        sortable: false,
+                        width: "3%",
+                    },
+                    // {
+                    //     text: "Avg. pLDDT",
+                    //     value: "avg_plddt",
+                    //     sortable: false,
+                    // },
+                    {
+                        title: "Members",
+                        value: "n_mem",
+                        sortable: false,
+                        width: "3%",
+                    },
+                ],
+                options: {
+                    page: 1,
+                    itemsPerPage: 10,
+                    avg_length_range: [0, Infinity],
+                    length_range: [0, Infinity],
+                    plddt_range: [0, Infinity],
+                    n_mem_range: [0, Infinity],
+                    tax_id: null,
+                    is_singleton: null,
+                    is_reference: null,
+                },
+                taxAutocompleteDisabled: false,
+                range: [5, 5],
+            };
+        },
+        mounted() {
+            this.fetchData();
+        },
+        watch : {
+            options: {
+                handler () {
+                    this.fetchData()
+                },
+                deep: true,
+            },
+            '$route': function(to, from) {
+                // fullPath: name searches differ only in their ?q=
+                if (from.fullPath != to.fullPath) {
+                    this.fetchData();
+                }
+            }
+        },
+        computed: {
+            requestOptions() {
+                const options = {
+                    "q": this.$route.query.q,
+                };
+                const obj = Object.assign({}, this.options, options);
+                let copy = JSON.parse(JSON.stringify(obj));
+                if (copy.tax_id) {
+                    copy.tax_id = copy.tax_id.value;
+                } else {
+                    delete copy.tax_id;
+                }
+                if (copy.is_singleton == null) {
+                    delete copy.is_singleton;
+                }
+                if (copy.is_reference == null) {
+                    delete copy.is_reference;
+                }
+                const params = new URLSearchParams(copy);
+                params.sort();
+                return { params };
+            },
+        },
+        methods: {
+            log(value) {
+                console.log(value);
+            },
+            fetchData () {
+                if (!this.$route.query.q) {
+                    return;
+                }
+
+                this.loading = true;
+                this.$axios.get("/search/name", this.requestOptions)
+                    .then(response => {
+                        this.response = response.data.result;
+                        this.total = response.data.total;
+                        this.$emit('total', this.total);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
+            }
+        }
+    };
+    </script>
+    
